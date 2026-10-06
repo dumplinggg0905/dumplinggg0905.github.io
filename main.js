@@ -1,11 +1,10 @@
 // Projects listed in priority order. To reorder, move entries; to add one, copy a block.
 const CATEGORIES = [
-  { id: "all", label: "All projects" },
-  { id: "offshore", label: "Offshore & Production" },
-  { id: "reservoir", label: "Reservoir & Subsurface" },
-  { id: "innovation", label: "Engineering Innovation" },
-  { id: "energy", label: "Energy & Sustainability" },
-  { id: "leadership", label: "Leadership & Strategy" },
+  { id: "offshore", label: "Offshore & production", note: "Platforms, wells and the equipment between the reservoir and the export line." },
+  { id: "reservoir", label: "Reservoir & subsurface", note: "Simulation, field development planning and log interpretation." },
+  { id: "innovation", label: "Engineering innovation", note: "Sensing, robotics and hardware built for inspection and monitoring." },
+  { id: "energy", label: "Energy & sustainability", note: "Circular systems, biogas and resource recovery." },
+  { id: "leadership", label: "Leadership & strategy", note: "Multinational teams, market entry and business cases under deadline." },
 ];
 
 const PROJECTS = [
@@ -43,7 +42,7 @@ const PROJECTS = [
   {
     id: "ipfest", cat: "reservoir",
     title: "IPFEST 2026: Development Plan Competition",
-    role: "Reservoir Strategy Lead",
+    role: "Reservoir Strategy Lead · IPFEST 2026",
     placeholder: "IPFEST", placeholderSub: "Development plan · 2026",
     summary: "Led reservoir strategy for a competition development plan. Optimised gas-injection placement across three development models in tNavigator.",
     metrics: ["35.55 → 37.68 MMSTB", "3 development models", "tNavigator"],
@@ -85,10 +84,10 @@ const PROJECTS = [
   {
     id: "formation", cat: "reservoir",
     title: "Formation Evaluation of Well ED-01, East Desaru Field",
-    role: "Petrophysicist · Formation Evaluation & Well Logging (6-person team)",
+    role: "Petrophysicist · Formation Evaluation & Well Logging, 6-person team",
     img: "assets/img/formation.jpg",
     summary: "Full quick-look and quantitative log interpretation over 5,195–5,949 ft: shale volume, porosity, saturation and pay identification.",
-    metrics: ["GR · density · neutron · sonic · resistivity", "Archie & Simandoux", "101.5 ft primary pay"],
+    metrics: ["GR, density, neutron, sonic, resistivity logs", "Archie & Simandoux", "101.5 ft primary pay"],
     kpis: [["~754 ft", "interval interpreted"], ["101.5 ft", "primary pay, Sw ≈ 0.08"], ["67.5 ft", "likely oil interval, φe ≈ 0.14"]],
     sections: {
       "My individual analysis": ["Computed IGR and Vsh from gamma ray, density and neutron porosity with shale correction, and density–neutron crossplots for lithology.", "Interpreted Rt vs Rxo invasion profiles and calculated water saturation with both Archie (clean sand) and Simandoux (shaly sand) models."],
@@ -165,7 +164,7 @@ const PROJECTS = [
   {
     id: "resonance", cat: "innovation",
     title: "Résonance: Kinetic-Powered Fragrance Applicator",
-    role: "Team Anchor · Luxury beauty-tech innovation case (YSL / L'Oréal Luxe)",
+    role: "Team member · Team Anchor, luxury beauty-tech case for YSL / L'Oréal Luxe",
     img: "assets/img/resonance.jpg",
     summary: "Hardware concept that turns a passive perfume spray into a 5-second grounding ritual, powered entirely by kinetic energy harvested when the device docks.",
     metrics: ["Faraday kinetic harvester", "Lithium-free supercapacitor", "Refill ecosystem"],
@@ -189,7 +188,7 @@ const PROJECTS = [
   {
     id: "splendid", cat: "leadership",
     title: "Splendid 360: Succession & Asset-Protection Ecosystem",
-    role: "Team APTaytude · Inter-university corporate case study",
+    role: "Team member · Team APTaytude, inter-university corporate case study",
     img: "assets/img/splendid.jpg",
     summary: "Strategy for a trust company to serve family-owned SMEs across their whole lifecycle, from founding to succession, through a multi-partner advisory network.",
     metrics: ["1.2M → 10,800 SMEs", "60 phase-1 contracts", "SWOT & risk plan"],
@@ -200,62 +199,62 @@ const PROJECTS = [
   },
 ];
 
-const grid = document.getElementById("project-grid");
-const filters = document.querySelector(".filters");
-const modal = document.getElementById("modal");
-const modalBody = document.getElementById("modal-body");
-const catLabel = id => CATEGORIES.find(c => c.id === id).label;
+
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const splitRole = r => { const [role, ...ctx] = r.split(" · "); return { role, ctx: ctx.join(", ") }; };
+const rank = id => PROJECTS.findIndex(p => p.id === id) + 1;
 
-function thumb(p, rank) {
-  const inner = p.img
-    ? `<img src="${p.img}" alt="${esc(p.title)}" loading="lazy"${p.pos ? ` style="object-position:${p.pos}"` : ""}>`
-    : `<div>${esc(p.placeholder)}<small>${esc(p.placeholderSub)}</small></div>`;
-  return `<div class="thumb${p.img ? "" : " placeholder"}">${inner}
-    <span class="rank">#${rank}</span>${p.award ? `<span class="award-tag">🏆 ${esc(p.award)}</span>` : ""}</div>`;
-}
-
-grid.innerHTML = PROJECTS.map((p, i) => `
-  <button class="card reveal${p.featured ? " featured" : ""}" data-cat="${p.cat}" data-id="${p.id}">
-    ${thumb(p, i + 1)}
-    <div class="card-body">
-      <span class="cat">${catLabel(p.cat)}</span>
-      <h3>${esc(p.title)}</h3>
-      <div class="role">${esc(p.role)}</div>
-      <p class="summary">${esc(p.summary)}</p>
-      <div class="metrics">${p.metrics.map(m => `<span class="metric">${esc(m)}</span>`).join("")}</div>
-      <span class="more">View details →</span>
-    </div>
-  </button>`).join("");
-
-filters.innerHTML = CATEGORIES.map(c => {
-  const n = c.id === "all" ? PROJECTS.length : PROJECTS.filter(p => p.cat === c.id).length;
-  return `<button class="filter" role="tab" data-cat="${c.id}" aria-selected="${c.id === "all"}">${c.label}<span class="count">${n}</span></button>`;
+// Project list, grouped by category; each project keeps its overall priority number.
+const list = document.getElementById("project-list");
+list.innerHTML = CATEGORIES.map(c => {
+  const items = PROJECTS.filter(p => p.cat === c.id);
+  return `<section class="formation" id="f-${c.id}" aria-labelledby="h-${c.id}">
+    <header class="formation-head">
+      <h3 id="h-${c.id}">${c.label}</h3>
+      <p>${c.note}</p>
+    </header>
+    <ol class="rows">${items.map(p => {
+      const { role, ctx } = splitRole(p.role);
+      const pic = p.img
+        ? `<img src="${p.img}" alt="" loading="lazy"${p.pos ? ` style="object-position:${p.pos}"` : ""}>`
+        : `<span class="noimg">${esc(p.placeholder)}</span>`;
+      return `<li class="row${p.featured ? " feature" : ""}">
+        <button type="button" data-id="${p.id}" aria-haspopup="dialog">
+          <span class="row-pic">${pic}</span>
+          <span class="row-text">
+            <span class="row-rank">Priority ${rank(p.id)}${p.award ? `<span class="row-award">${esc(p.award)}</span>` : ""}</span>
+            <span class="row-title">${esc(p.title)}</span>
+            <span class="row-role"><strong>${esc(role)}</strong>${ctx ? `, ${esc(ctx)}` : ""}</span>
+            <span class="row-sum">${esc(p.summary)}</span>
+          </span>
+          <span class="row-nums">${p.metrics.map(m => `<span>${esc(m)}</span>`).join("")}</span>
+        </button>
+      </li>`;
+    }).join("")}</ol>
+  </section>`;
 }).join("");
 
-filters.addEventListener("click", e => {
-  const b = e.target.closest(".filter"); if (!b) return;
-  filters.querySelectorAll(".filter").forEach(f => f.setAttribute("aria-selected", f === b));
-  grid.querySelectorAll(".card").forEach(c => {
-    const show = b.dataset.cat === "all" || c.dataset.cat === b.dataset.cat;
-    c.classList.toggle("hide", !show);
-    c.classList.toggle("featured", show && b.dataset.cat === "all" && PROJECTS.find(p => p.id === c.dataset.id).featured);
-  });
-});
+// Jump links to each category
+document.getElementById("jump").innerHTML = CATEGORIES.map(c =>
+  `<a href="#f-${c.id}">${c.label} <span>${PROJECTS.filter(p => p.cat === c.id).length}</span></a>`).join("");
 
-grid.addEventListener("click", e => {
-  const c = e.target.closest(".card"); if (!c) return;
-  const p = PROJECTS.find(x => x.id === c.dataset.id);
-  modalBody.innerHTML = `
+// Project detail dialog
+const modal = document.getElementById("modal");
+const body = document.getElementById("modal-body");
+list.addEventListener("click", e => {
+  const b = e.target.closest("button[data-id]"); if (!b) return;
+  const p = PROJECTS.find(x => x.id === b.dataset.id);
+  const { role, ctx } = splitRole(p.role);
+  body.innerHTML = `
     ${p.img ? `<img class="m-img" src="${p.img}" alt="">` : ""}
     <div class="m-body">
-      <span class="cat">${catLabel(p.cat)}${p.award ? ` · 🏆 ${esc(p.award)}` : ""}</span>
+      <p class="m-kicker">Priority ${rank(p.id)}, ${CATEGORIES.find(c => c.id === p.cat).label.toLowerCase()}${p.award ? `<span class="row-award">${esc(p.award)}</span>` : ""}</p>
       <h2 id="modal-title">${esc(p.title)}</h2>
-      <div class="m-meta">${esc(p.role)}</div>
-      <p>${esc(p.summary)}</p>
-      ${p.kpis ? `<h4>Key numbers</h4><div class="kpis">${p.kpis.map(([v, l]) => `<div class="kpi"><strong>${esc(v)}</strong><span>${esc(l)}</span></div>`).join("")}</div>` : ""}
-      ${Object.entries(p.sections).map(([h, items]) => `<h4>${esc(h)}</h4><ul>${items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`).join("")}
-      <h4>Tools & methods</h4><ul class="chips">${p.tools.map(t => `<li>${esc(t)}</li>`).join("")}</ul>
+      <p class="m-role"><strong>${esc(role)}</strong>${ctx ? `, ${esc(ctx)}` : ""}</p>
+      <p class="m-sum">${esc(p.summary)}</p>
+      ${p.kpis ? `<dl class="m-kpis">${p.kpis.map(([v, l]) => `<div><dt>${esc(v)}</dt><dd>${esc(l)}</dd></div>`).join("")}</dl>` : ""}
+      ${Object.entries(p.sections).map(([h, items]) => `<h3>${esc(h)}</h3><ul>${items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`).join("")}
+      <h3>Tools and methods</h3><p class="m-tools">${p.tools.map(esc).join(", ")}</p>
     </div>`;
   modal.showModal();
   modal.scrollTop = 0;
@@ -263,17 +262,45 @@ grid.addEventListener("click", e => {
 modal.querySelector(".modal-close").addEventListener("click", () => modal.close());
 modal.addEventListener("click", e => { if (e.target === modal) modal.close(); });
 
-// nav
-const nav = document.querySelector(".nav");
+// Depth track: maps scroll position to 0–1,200 m (Limbayong's deepest water depth)
+const MAX_DEPTH = 1200;
+const marker = document.getElementById("rail-marker");
+const readout = document.getElementById("rail-depth");
+const bar = document.getElementById("depth-bar");
+const tops = document.getElementById("rail-tops");
+const sections = [...document.querySelectorAll("[data-top]")];
+
+// A section's "top" sits at its share of the page; the marker reads a point that
+// travels from the top to the bottom of the viewport as you scroll, so it reaches every top.
+function layoutTops() {
+  const H = document.documentElement.scrollHeight;
+  const trackH = tops.parentElement.clientHeight;
+  let last = -Infinity;
+  tops.innerHTML = sections.map(s => {
+    const f = Math.min(1, Math.max(0, s.offsetTop - 60) / H);
+    const y = Math.min(trackH, Math.max(f * trackH, last + 34));
+    last = y;
+    return `<a href="#${s.id}" style="top:${y.toFixed(1)}px"><span class="rail-m">${Math.round(f * MAX_DEPTH).toLocaleString("en")} m</span>${s.dataset.top}</a>`;
+  }).join("");
+}
+function onScroll() {
+  const H = document.documentElement.scrollHeight;
+  const max = H - innerHeight;
+  const p = max > 0 ? Math.min(1, scrollY / max) : 0;
+  const f = Math.min(1, (scrollY + innerHeight * p) / H);
+  marker.style.top = (f * 100) + "%";
+  readout.textContent = Math.round(f * MAX_DEPTH).toLocaleString("en") + " m";
+  bar.style.transform = `scaleX(${p})`;
+}
+addEventListener("scroll", onScroll, { passive: true });
+addEventListener("resize", () => { layoutTops(); onScroll(); });
+addEventListener("load", () => { layoutTops(); onScroll(); });
+layoutTops(); onScroll();
+
+// Mobile menu
 const links = document.querySelector(".nav-links");
 const toggle = document.querySelector(".nav-toggle");
-addEventListener("scroll", () => nav.classList.toggle("scrolled", scrollY > 8), { passive: true });
 toggle.addEventListener("click", () => { const o = links.classList.toggle("open"); toggle.setAttribute("aria-expanded", o); });
-links.addEventListener("click", e => { if (e.target.tagName === "A") links.classList.remove("open"); });
-
-// reveal on scroll
-document.querySelectorAll(".ready, .skill-card, .timeline li, .awards li").forEach(el => el.classList.add("reveal"));
-const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } }), { threshold: .1 });
-document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+links.addEventListener("click", e => { if (e.target.tagName === "A") { links.classList.remove("open"); toggle.setAttribute("aria-expanded", false); } });
 
 document.getElementById("year").textContent = new Date().getFullYear();
