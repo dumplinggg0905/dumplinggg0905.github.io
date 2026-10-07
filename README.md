@@ -2,4 +2,9 @@
 
 Live site: https://dumplinggg0905.github.io
 
-Static site (HTML/CSS/JS, no build step). Projects are defined in `main.js` in the `PROJECTS` array, in priority order. To add or reorder a project, edit that array. Images are in `assets/img/`.
+Static site (HTML, CSS, JS; no build step).
+
+- Projects live in `main.js` in the `PROJECTS` array, listed in priority order within each group.
+- Groups (Offshore & production, Reservoir & subsurface, Sensing & robotics, Business) are defined in `GROUPS`.
+- Each project has a one-line `result`, an optional `key` number, an optional `award`, and the detail shown when expanded.
+- Images are in `assets/img/`.

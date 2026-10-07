@@ -1,286 +1,275 @@
-// Projects listed in priority order. To reorder, move entries; to add one, copy a block.
-const CATEGORIES = [
-  { id: "offshore", label: "Offshore & production", note: "Platforms, wells and the equipment between the reservoir and the export line." },
-  { id: "reservoir", label: "Reservoir & subsurface", note: "Simulation, field development planning and log interpretation." },
-  { id: "innovation", label: "Engineering innovation", note: "Sensing, robotics and hardware built for inspection and monitoring." },
-  { id: "energy", label: "Energy & sustainability", note: "Circular systems, biogas and resource recovery." },
-  { id: "leadership", label: "Leadership & strategy", note: "Multinational teams, market entry and business cases under deadline." },
+// Projects are listed in priority order inside each group.
+// To add a project, copy a block; `group` must match an id in GROUPS.
+const GROUPS = [
+  { id: "offshore", section: "engineering", label: "Offshore & production" },
+  { id: "reservoir", section: "engineering", label: "Reservoir & subsurface" },
+  { id: "sensing", section: "engineering", label: "Sensing & robotics" },
+  { id: "business", section: "business", label: null },
 ];
 
 const PROJECTS = [
   {
-    id: "petrox", cat: "offshore", featured: true,
-    title: "PetroX: Cylindrical Mono-Column FPSO for Limbayong",
-    role: "Offshore Platform Design Engineer · IEM 2nd Oil & Gas Platform Design Competition 2026",
-    award: "3rd Place",
-    img: "assets/img/petrox.jpg",
-    summary: "Five-person team design of a floating production, storage and offloading unit for PETRONAS' Limbayong deepwater field: 900–1,200 m water depth, 120 km offshore Sabah.",
-    metrics: ["40,000 BOPD", "180 MMSCFD gas", "10 subsea wells", "~600,000 bbl storage"],
-    kpis: [["900–1,200 m", "water depth"], ["up to 87.2%", "peak heave RAO reduction (bilge box, published CFD)"], ["80–100", "persons on board"], ["25–30 yr", "design life, no dry-docking"]],
+    id: "petrox", group: "offshore",
+    title: "PetroX: deepwater FPSO for the Limbayong field",
+    result: "Cylindrical FPSO concept for 40,000 BOPD in up to 1,200 m of water, 120 km off Sabah.",
+    context: "Offshore platform design engineer, IEM Oil & Gas Platform Design Competition 2026",
+    award: "3rd place nationally",
+    key: ["1,200 m", "water depth"],
+    img: "assets/img/petrox.jpg", photo: "assets/img/iem-models.jpg", photoAlt: "Platform scale models at the IEM grand final",
+    kpis: [["40,000 BOPD", "oil, plus 180 MMSCFD gas"], ["10", "subsea wells"], ["~600,000 bbl", "storage inside the hull"], ["up to 87.2%", "lower peak heave response (bilge box, published CFD)"]],
     sections: {
-      "The challenge": ["Ten wells, 40,000 BOPD and 600,000 bbl of storage on one floating structure, with no export pipeline and no dry-dock for 25–30 years.", "Design drivers: 100-year metocean conditions (Hmax 9.28 m, 1.51 m/s current), an unstable seabed with slope failures, aggressive tropical biofouling, and tight CAPEX."],
-      "What we did": ["Screened five concepts (jacket, semi-sub, spar, TLP, cylindrical FPSO) and selected a mono-column FPSO because it can store crude in the hull and offload to a shuttle tanker.", "Specified a 90 m double-hull cylinder (2.5 m annulus) with an integrated bilge box to push the heave natural period above the 6–12 s wave band and suppress vortex-induced motion.", "Laid out the topsides with a central process core, accommodation separated from hydrocarbon areas, two pedestal cranes and a 22 m helideck sized with the CAP 437 D-value method for an S-92."],
-      "My contribution": ["Integrated the integrity and sustainability package: PDMS fouling-release coating combined with ultrasonic guided waves, resident ROV inspection, digital-twin condition monitoring, and a hybrid solar, wave and ORC auxiliary microgrid.", "Defended the concept in the technical presentation and Q&A before IEM OGMTD judges."],
+      "The brief": ["Ten wells, 40,000 BOPD and 600,000 bbl of storage on one floating structure, with no export pipeline and no dry-docking for 25–30 years.", "Design drivers: 100-year metocean conditions (Hmax 9.28 m, 1.51 m/s current), an unstable seabed, aggressive tropical biofouling and tight CAPEX."],
+      "What we designed": ["Screened jacket, semi-sub, spar, TLP and FPSO concepts. Chose a cylindrical FPSO because it stores crude in the hull and offloads to a shuttle tanker.", "90 m double hull with a bilge box that moves the heave natural period out of the 6–12 s wave band and suppresses vortex-induced motion.", "Topsides with a central process core, accommodation separated from hydrocarbons, two cranes and a 22 m helideck sized to CAP 437 for an S-92."],
+      "My part": ["Integrity and energy package: fouling-release coating with ultrasonic guided waves, resident ROV inspection, digital-twin monitoring, and a solar, wave and ORC auxiliary microgrid.", "Presented and defended the design to IEM OGMTD judges at the grand final."],
     },
-    tools: ["Concept screening", "Hydrostatics & stability", "Topside layout", "Integrity management", "SolidWorks"],
+    tools: "Concept screening, hydrostatics and stability, topside layout, integrity management, SolidWorks",
   },
   {
-    id: "dulang", cat: "offshore",
-    title: "Nodal Analysis & Artificial Lift Selection: Dulang Offshore Field",
-    role: "Production / Field Engineer · Individual project, Production Engineering",
+    id: "dulang", group: "offshore",
+    title: "Nodal analysis of a mature offshore well, Dulang field",
+    result: "Showed the tubing, not the reservoir, limits the stimulated well, and ranked lift options on rate, risk and economics.",
+    context: "Individual project, Production Engineering",
+    key: ["1,500 STB/d", "with ESP, from 559"],
     img: "assets/img/dulang.jpg",
-    summary: "Diagnosed why a mature, CO₂-rich offshore well in the Dulang field underperformed, and ranked interventions on production, risk and whole-life economics.",
-    metrics: ["Skin 45 → 12.6", "559 → 721 STB/d", "ESP to 1,500 STB/d"],
-    kpis: [["2.60×", "inflow capacity after stimulation"], ["+29%", "actual rate gain (559.3 → 721.2 STB/d)"], ["903.4 STB/d", "with 3-1/2 in tubing"], ["1,500 STB/d", "with ESP (gas handling needed)"]],
+    kpis: [["45 → 12.6", "skin after stimulation"], ["559 → 721 STB/d", "actual gain: only 29%"], ["903 STB/d", "with 3-1/2 in tubing, no added power"], ["1,500 STB/d", "with ESP, if free gas is managed"]],
     sections: {
-      "The problem": ["Stimulation increased inflow capacity 2.6-fold, but the operating rate rose by only about 29%. I had to find out what was actually constraining the well."],
-      "Method": ["Built a Fetkovich IPR, a Beggs–Brill VLP for the 2-7/8 in string and a choke performance model, then solved them at the system node in Excel.", "Before modelling, reconciled inconsistent field and PVT data drawn from publications of different ages.", "Ran a ±10% tornado sensitivity analysis. Reservoir pressure dominated, followed by gas gravity and tubing ID."],
-      "Findings & recommendation": ["After stimulation, tubing friction became the dominant constraint. More reservoir treatment would add little.", "Recommended a staged plan: stimulate, then resize the tubing to 3-1/2 in (903 STB/d with no added power). An ESP gives the highest rate (1,500 STB/d) and the best economics, provided the ~61% free gas at the pump intake is managed and materials suit the CO₂ service.", "Rejected gas lift: the small rate gain is offset by higher wellhead pressure and a negative economic return."],
+      "The question": ["Stimulation raised inflow capacity 2.6-fold, yet the rate rose only 29%. Why?"],
+      "Method": ["Fetkovich IPR, Beggs–Brill VLP for the 2-7/8 in string and a choke model, solved at the system node in Excel.", "Reconciled inconsistent field and PVT data from publications of different ages before modelling.", "±10% tornado sensitivity: reservoir pressure dominates, then gas gravity and tubing ID."],
+      "Recommendation": ["Staged plan: stimulate, then upsize the tubing to 3-1/2 in. An ESP gives the most oil and the best economics, provided the ~61% free gas at the intake is handled and materials suit CO₂ service.", "Gas lift rejected: small rate gain, higher wellhead pressure, negative return."],
     },
-    tools: ["Fetkovich IPR", "Beggs–Brill VLP", "Choke modelling", "ESP / gas lift design", "Sensitivity analysis", "Excel"],
+    tools: "Fetkovich IPR, Beggs–Brill VLP, choke modelling, ESP and gas lift design, sensitivity analysis, Excel",
   },
   {
-    id: "ipfest", cat: "reservoir",
-    title: "IPFEST 2026: Development Plan Competition",
-    role: "Reservoir Strategy Lead · IPFEST 2026",
-    placeholder: "IPFEST", placeholderSub: "Development plan · 2026",
-    summary: "Led reservoir strategy for a competition development plan. Optimised gas-injection placement across three development models in tNavigator.",
-    metrics: ["35.55 → 37.68 MMSTB", "3 development models", "tNavigator"],
-    kpis: [["+2.13 MMSTB", "projected cumulative production"], ["3", "development models compared"]],
+    id: "samudera", group: "offshore",
+    title: "SAMUDERA: anchor-drag warning for subsea cables",
+    result: "Fuses vessel tracks, ocean conditions and seabed data to warn operators before a dragging anchor reaches a cable.",
+    context: "Team Tofo, hackathon entry, Industry Improvement track",
+    key: ["~30%", "of cable damage is from anchors"],
+    img: "assets/img/samudera.jpg",
+    kpis: [["> 99%", "of international data runs on subsea cables"], ["£0.5–1 M", "typical repair cost per incident"], ["$0", "new marine hardware needed"]],
     sections: {
-      "What I did": ["Optimised gas-injection well placement across three development models, raising projected cumulative production from 35.55 to 37.68 MMSTB through better pressure maintenance.", "Evaluated dynamic reservoir response and gas-cap sweep under competition deadlines.", "Defended the development strategy before upstream industry evaluators."],
+      "The problem": ["Dragged anchors cause roughly 30% of subsea cable damage, and operators usually learn about it only after the fault."],
+      "How it works": ["Ingests AIS vessel tracks, Copernicus and ERA5 metocean data, GEBCO bathymetry and public cable routes into PostGIS, starting with the Mersing corridor.", "A physics engine compares wind, current and wave load with anchor holding capacity. An unsupervised IsolationForest model flags drifting and loitering vessels.", "A policy engine ranks risk by cable criticality and recommends monitor, prepare backup or escalate. A human operator approves every action."],
+      "Why it matters offshore": ["The same anchor-drag and seabed-interaction physics applies to pipelines, flowlines and moorings around offshore installations."],
     },
-    tools: ["tNavigator", "Gas injection design", "Pressure maintenance", "Field development planning"],
+    tools: "Python, FastAPI, PostgreSQL and PostGIS, IsolationForest, Next.js dashboard, AIS, metocean and bathymetry data",
   },
   {
-    id: "waterflood", cat: "reservoir",
-    title: "Adaptive Waterflood Development in a Heterogeneous Reservoir",
-    role: "Reservoir Simulation Engineer · Individual project, Reservoir Simulation",
+    id: "ipfest", group: "reservoir",
+    title: "Gas-injection development plan, IPFEST 2026",
+    result: "Optimised gas-injection placement across three models in tNavigator for better pressure maintenance.",
+    context: "Reservoir strategy lead, IPFEST 2026 development plan competition",
+    key: ["+2.13 MMSTB", "projected recovery"],
+    kpis: [["35.55 → 37.68 MMSTB", "projected cumulative production"], ["3", "development models compared"]],
+    sections: {
+      "What I did": ["Optimised gas-injection well placement across three development models in tNavigator.", "Evaluated dynamic reservoir response and gas-cap sweep under competition deadlines.", "Defended the development strategy to upstream industry evaluators."],
+    },
+    tools: "tNavigator, gas injection design, pressure maintenance, field development planning",
+  },
+  {
+    id: "waterflood", group: "reservoir",
+    title: "Adaptive waterflood in a layered, anisotropic reservoir",
+    result: "Isolated a high-permeability thief layer: less water, almost all of the value, and a simpler field to run.",
+    context: "Individual project, Reservoir Simulation",
+    key: ["−33%", "water per barrel of oil"],
     img: "assets/img/waterflood.jpg",
-    summary: "15-year tNavigator study of a three-layer anisotropic reservoir. Each development strategy was designed to fix the limitation exposed by the one before it.",
-    metrics: ["Water cut 81.3% → 76.6%", "Water intensity −33%", "tNavigator"],
-    kpis: [["100×100×3", "grid (30,000 cells)"], ["0.533 → 0.355", "bbl water per bbl oil (S2 → S3)"], ["99.5%", "of the best case's NCF captured by the simpler S3"], ["US$15.86 B", "undiscounted NCF (S3)"]],
+    kpis: [["100 × 100 × 3", "grid, 15-year forecast"], ["81.3% → 76.6%", "terminal water cut"], ["0.533 → 0.355", "bbl water per bbl oil"], ["99.5%", "of the best case's cash flow, with less complexity"]],
     sections: {
-      "Approach": ["S1 natural depletion → S2 anisotropy-aware waterflood → S3 Layer-2 conformance control → S4 dynamic voidage-replacement (VRR) injection management.", "Evaluated each case on rate, cumulative oil, pressure, water cut, 3D sweep, water intensity and net cash flow."],
-      "Key insight": ["Pressure support is not the same as effective displacement. In S2, the high-permeability Layer 2 became a thief zone. Isolating it in S3 cut terminal water cut from 81.3% to 76.6%, but moved the constraint to injectivity.", "Dynamic control in S4 added only 0.46 MMSTB, because it cannot create transmissibility the rock doesn't have."],
-      "Recommendation": ["Adopt S3 (conformance control with fixed-rate injection). It delivers about 99.5% of S4's value without the added surveillance hardware and operational complexity."],
+      "Approach": ["Four strategies, each built to fix the limit exposed by the last: natural depletion, anisotropy-aware waterflood, Layer-2 conformance control, dynamic voidage-replacement control.", "Compared rate, cumulative oil, pressure, water cut, 3D sweep, water intensity and net cash flow."],
+      "Key insight": ["Pressure support is not the same as sweep. Layer 2 stole the injected water; isolating it cut water cut but moved the constraint to injectivity.", "Dynamic control added only 0.46 MMSTB: it cannot create transmissibility the rock does not have."],
+      "Recommendation": ["Conformance control with fixed-rate injection: about 99.5% of the best case's value without the extra surveillance hardware."],
     },
-    tools: ["tNavigator", "Waterflood design", "Conformance control", "VRR management", "Economic analysis"],
+    tools: "tNavigator, waterflood design, conformance control, voidage replacement, economic analysis",
   },
   {
-    id: "injection", cat: "reservoir",
-    title: "Injection-Well Configuration for EOR & Net Profit",
-    role: "Reservoir Engineer · Individual project, Reservoir Engineering",
+    id: "injection", group: "reservoir",
+    title: "Injection-well configuration for recovery and profit",
+    result: "Horizontal line-drive gave the most oil and least water for 30% less well CAPEX than vertical injectors.",
+    context: "Individual project, Reservoir Engineering",
+    key: ["72.3%", "recovery factor, from 20.5%"],
     img: "assets/img/injection.jpg",
-    summary: "CMG IMEX black-oil study of a 15°-dipping reservoir, comparing a 5-spot, a phased down-dip flood and a horizontal line-drive against primary depletion.",
-    metrics: ["RF 20.5% → 72.3%", "6.43 MMSTB", "Net profit $421.8 MM"],
-    kpis: [["20.49% → 72.34%", "recovery factor, primary → selected case"], ["6.432 MMSTB", "cumulative oil (best)"], ["$10.5 MM vs $15 MM", "well CAPEX, horizontal vs vertical"], ["20.03 MMSTB", "lowest cumulative water"]],
+    kpis: [["20.5% → 72.3%", "recovery factor, primary to selected case"], ["6.43 MMSTB", "cumulative oil"], ["$10.5 M vs $15 M", "well CAPEX, horizontal vs vertical"], ["$421.8 M", "undiscounted net profit"]],
     sections: {
-      "Approach": ["Built a 51×51×5 inclined model in CMG Builder (70 acres, 200 ft thick, 15° dip) and ran 15-year forecasts.", "Compared breakthrough timing, water cut, 2D/3D saturation fronts, water handling and undiscounted economics."],
-      "Outcome": ["All waterflood cases exceeded 72% RF, so well architecture changed the timing and efficiency of displacement more than ultimate recovery.", "Selected the horizontal line-drive: highest oil, lowest water and one-third less well CAPEX, giving the best net profit."],
+      "Approach": ["Built a 51 × 51 × 5 dipping model (15°, 70 acres, 200 ft thick) in CMG IMEX and compared a 5-spot, a phased down-dip flood and a horizontal line-drive over 15 years.", "Tracked breakthrough timing, water cut, 2D and 3D saturation fronts, water handling and economics."],
+      "Outcome": ["Every waterflood case passed 72% recovery, so well design changed how efficiently oil was displaced more than how much.", "Selected the horizontal line-drive: highest oil, lowest water and the lowest well cost."],
     },
-    tools: ["CMG IMEX", "CMG Builder", "Results 3D", "Waterflood design", "Project economics"],
+    tools: "CMG IMEX, CMG Builder, Results 3D, waterflood design, project economics",
   },
   {
-    id: "formation", cat: "reservoir",
-    title: "Formation Evaluation of Well ED-01, East Desaru Field",
-    role: "Petrophysicist · Formation Evaluation & Well Logging, 6-person team",
+    id: "formation", group: "reservoir",
+    title: "Formation evaluation of well ED-01, East Desaru field",
+    result: "Interpreted 754 ft of logs for shale volume, porosity and saturation, and picked the pay zones.",
+    context: "Petrophysicist, 6-person team, Formation Evaluation & Well Logging",
+    key: ["101.5 ft", "primary pay"],
     img: "assets/img/formation.jpg",
-    summary: "Full quick-look and quantitative log interpretation over 5,195–5,949 ft: shale volume, porosity, saturation and pay identification.",
-    metrics: ["GR, density, neutron, sonic, resistivity logs", "Archie & Simandoux", "101.5 ft primary pay"],
-    kpis: [["~754 ft", "interval interpreted"], ["101.5 ft", "primary pay, Sw ≈ 0.08"], ["67.5 ft", "likely oil interval, φe ≈ 0.14"]],
+    kpis: [["5,195–5,949 ft", "interval interpreted"], ["101.5 ft", "primary pay, Sw ≈ 0.08"], ["67.5 ft", "likely oil interval, φe ≈ 0.14"]],
     sections: {
-      "My individual analysis": ["Computed IGR and Vsh from gamma ray, density and neutron porosity with shale correction, and density–neutron crossplots for lithology.", "Interpreted Rt vs Rxo invasion profiles and calculated water saturation with both Archie (clean sand) and Simandoux (shaly sand) models."],
-      "Team result": ["Identified a gas-influenced primary pay at 5,376.5–5,478.0 ft and the most likely oil-bearing interval at 5,790.5–5,858.0 ft, plus a secondary pay zone."],
+      "My analysis": ["Gamma ray index and shale volume, density and neutron porosity with shale correction, and density–neutron crossplots for lithology.", "Rt versus Rxo invasion profiles and water saturation from both Archie (clean sand) and Simandoux (shaly sand)."],
+      "Team result": ["A gas-influenced primary pay at 5,376.5–5,478.0 ft, the most likely oil interval at 5,790.5–5,858.0 ft, and a secondary pay zone."],
     },
-    tools: ["Well-log interpretation", "Archie", "Simandoux", "Density–neutron crossplots"],
+    tools: "Well-log interpretation, Archie, Simandoux, density–neutron crossplots",
   },
   {
-    id: "leaksweeper", cat: "innovation",
-    title: "Leak Sweeper: Autonomous Pipe-Leak Detection Rover",
-    role: "Team member · XJTLU Dream Chasers 2025",
+    id: "leaksweeper", group: "sensing",
+    title: "Leak Sweeper: autonomous pipe-leak detection rover",
+    result: "Rover with swappable acoustic and mmWave-radar sensors that finds buried pipe leaks from the surface.",
+    context: "Team member, XJTLU Dream Chasers 2025",
+    key: ["~40%", "lower lifetime cost (est.)"],
     img: "assets/img/leaksweeper.jpg", pos: "center 75%",
-    summary: "An autonomous AI rover with swappable acoustic and mmWave-radar sensors that detects buried pipeline leaks from the surface, without excavation or pipe access.",
-    metrics: ["Multi-sensor fusion", "SLAM navigation", "~40% TCO savings (est.)"],
     sections: {
-      "Problem": ["126 billion m³ of water is lost worldwide each year before reaching customers, and 70–80% of that is physical leakage. Fixed sensors are costly, and manual surveys are slow and depend on the operator."],
-      "Solution": ["AI recommends a sensor set for each pipeline profile. The rover navigates autonomously using SLAM, fuses acoustic and mmWave data to pinpoint leaks, and generates maintenance reports automatically.", "The same contactless, surface-based integrity approach can be applied to oil & gas flowline and pipeline surveillance."],
+      "The problem": ["126 billion m³ of water is lost worldwide each year before reaching customers, 70–80% of it through physical leaks. Fixed sensors are costly; manual surveys are slow."],
+      "The concept": ["AI picks sensors for each pipeline profile, the rover navigates with SLAM, fuses acoustic and radar data to pinpoint leaks, and writes the maintenance report.", "The same contactless, surface-based approach applies to oil and gas flowline surveillance."],
     },
-    tools: ["Robotics concept", "Acoustic sensing", "mmWave radar", "SLAM", "Asset integrity"],
+    tools: "Robotics concept, acoustic sensing, mmWave radar, SLAM, asset integrity",
   },
   {
-    id: "retrace", cat: "innovation",
-    title: "ReTrace Intercept: AI Pre-Compaction Waste Recovery",
-    role: "Team member · The TryHards",
+    id: "retrace", group: "sensing",
+    title: "ReTrace Intercept: smart bin and truck-mounted sorter",
+    result: "Built and tested sensors that tell wet from dry waste, so wet bags are diverted before compaction.",
+    context: "Team member, The TryHards",
+    key: ["90%", "accuracy over 500 test drops"],
     img: "assets/img/retrace.jpg",
-    summary: "Built and tested an IoT smart bin and truck-mounted interceptor that detect wet 'moisture anchor' bags and divert them before compaction contaminates recyclables.",
-    metrics: ["90% classification accuracy", "ESP32 edge ML", "LoRa + Blynk dashboard"],
-    kpis: [["450 / 500", "drops correctly classified"], ["60–77 GHz", "mmWave radar bag scan"], ["2.5–2.9×", "acoustic feature separation, wet vs dry"]],
     sections: {
-      "Engineering": ["Smart bin: reed-switch wake, load cell, ultrasonic fill level and an acoustic impact classifier (5 features per drop). A threshold of 7.7 ms active duration separates wet from dry.", "Truck intercept: mmWave radar reads each bag through opaque plastic, an ESP32 scores it, and an L-gate diverts wet bags to a sealed pod.", "Fail-safe design: every failure mode (power loss, sensor offline, full pod, low confidence) returns the truck to normal operation."],
+      "What we built": ["Smart bin with a load cell, ultrasonic fill sensor and acoustic impact classifier; a 7.7 ms duration threshold separates wet from dry.", "Truck unit: mmWave radar reads each bag through the plastic, an ESP32 scores it and a gate diverts wet bags.", "Fail-safe by design: any fault returns the truck to normal operation."],
     },
-    tools: ["ESP32", "Acoustic signal features", "mmWave radar", "LoRa", "Blynk IoT", "CAD prototyping"],
+    tools: "ESP32, acoustic signal features, mmWave radar, LoRa, Blynk IoT, CAD prototyping",
   },
+
   {
-    id: "foodup", cat: "energy",
-    title: "FoodUp: Food-Waste-to-Resource System",
-    role: "Founder · ASEAN-China-India Startathon 2025",
-    award: "National Champion",
+    id: "foodup", group: "business",
+    title: "FoodUp: food waste to biogas and fertiliser",
+    result: "Condominium-scale black soldier fly and anaerobic digestion system with a 250-unit pilot plan.",
+    context: "Founder, ASEAN-China-India Startathon 2025",
+    award: "National champion, 1st of 70+ teams",
+    key: ["3.3 months", "pilot payback"],
     img: "assets/img/foodup.jpg",
-    summary: "Condominium-scale circular system that combines black soldier fly larvae (BSFL) composting with anaerobic digestion to turn food waste into feed, fertiliser and biogas.",
-    metrics: ["1st of 70+ teams", "RM16,850 pilot", "~3.3-month payback"],
-    kpis: [["250 units", "pilot condominium"], ["150 kg/day", "food waste processed"], ["~33.75 m³", "biogas per month"], ["RM6,810", "net monthly profit (pilot)"]],
+    kpis: [["RM16,850", "pilot start-up cost"], ["150 kg/day", "food waste processed"], ["RM6,810", "net monthly profit (pilot)"]],
     sections: {
-      "Concept": ["Sealed BSFL bins with odour scrubbers and an anaerobic digester give pest-free processing at 3–5× lower cost than in-vessel composters.", "Revenue from an O&M fee (RM20 per unit) plus sales of frass, liquid fertiliser and larvae, using a B2B2C ESCO/BOOT model with building management."],
+      "Concept": ["Sealed larvae bins and an anaerobic digester turn food waste into feed, fertiliser and biogas at 3–5× lower cost than in-vessel composters.", "Revenue from a RM20-per-unit service fee plus product sales, under a service contract with building management."],
     },
-    tools: ["Anaerobic digestion", "Biogas", "Process sizing", "Business modelling", "Pitching"],
+    tools: "Anaerobic digestion, process sizing, business modelling, pitching",
   },
   {
-    id: "reactor", cat: "leadership",
-    title: "Reactor: Community Flood-Response Platform (Vietnam)",
-    role: "Product & Strategy Lead · ASEAN-China-India Youth Leadership Summit 2025",
-    award: "1st Runner Up",
-    img: "assets/img/reactor.jpg",
-    summary: "With teammates from Malaysia, Thailand, India, Myanmar and Vietnam, built a disaster-response app concept in four nights for flood-prone Vietnamese cities.",
-    metrics: ["5 countries, 1 team", "4 nights", "2nd overall"],
+    id: "reactor", group: "business",
+    title: "Reactor: community flood response for Vietnam",
+    result: "Disaster-response app concept built in four nights with teammates from five countries.",
+    context: "Product and strategy lead, ASEAN-China-India Youth Leadership Summit 2025",
+    award: "2nd place, S$5,000 prize",
+    key: ["5", "countries on one team"],
+    img: "assets/img/reactor.jpg", photo: "assets/img/podium-aci.jpg", photoAlt: "Team REX receiving the 2nd prize",
     sections: {
-      "What we built": ["A dual-mode app: Citizen Mode (SOS, live alerts, flood maps) and Reactor Mode (trained community responders). AI triages distress calls and dispatches nearby reactors.", "Curated pre-disaster training, a freemium plus affiliate revenue model, and partnerships with universities and NGOs."],
-      "My role": ["Turned an open-ended regional problem into a product direction and overall strategy, coordinating across cultures under severe time pressure."],
+      "What we built": ["Citizen mode (SOS, live alerts, flood maps) and Reactor mode for trained community responders, with AI triage of distress calls.", "Pre-disaster training, a freemium revenue model and university and NGO partnerships."],
+      "My role": ["Turned an open-ended regional problem into the product direction and overall strategy."],
     },
-    tools: ["Problem structuring", "Product strategy", "Cross-cultural teamwork", "Emergency response"],
+    tools: "Problem structuring, product strategy, cross-cultural teamwork",
   },
   {
-    id: "sidequest", cat: "energy",
-    title: "The Side Quest: 3D-Printed Mobility Aids from Plastic Waste",
-    role: "Team member · MAFC SLS Case Study Challenge 2026",
-    img: "assets/img/sidequest.jpg",
-    summary: "Social enterprise that turns recovered polymer waste into custom, refurbishable mobility aids for underserved patients through a rental and service model.",
-    metrics: ["202% 5-yr ROI", "3.23-yr payback", "RM250k+ revenue by Y3"],
+    id: "sidequest", group: "business",
+    title: "The Side Quest: mobility aids from plastic waste",
+    result: "Social enterprise that 3D-prints custom, refurbishable mobility aids for underserved patients.",
+    context: "Team member, Strategic Leadership Summit 2026 case challenge (MAFC and EY, Monash University)",
+    award: "2nd runner up",
+    key: ["202%", "5-year ROI"],
+    img: "assets/img/sidequest.jpg", photo: "assets/img/podium-sls.jpg", photoAlt: "The team with the 2nd runner up cheque at SLS 2026",
     sections: {
-      "Highlights": ["Mapped a fragmented ecosystem of hospitals, NGOs and corporates, where 80% of prosthetists are concentrated in urban hubs and patients wait 4–8 weeks.", "Designed rental, institutional-service and custom-sale revenue streams with RFID lifecycle tracking and a staged plan for MDA regulatory approval."],
+      "Highlights": ["Mapped a fragmented system of hospitals, NGOs and corporates where patients wait 4–8 weeks for devices.", "Rental, institutional service and custom-sale revenue with RFID lifecycle tracking: 3.23-year payback and RM250k+ revenue by year 3."],
     },
-    tools: ["Circular economy", "3D printing", "Financial modelling", "SDG impact"],
+    tools: "Circular economy, 3D printing, financial modelling",
   },
   {
-    id: "resonance", cat: "innovation",
-    title: "Résonance: Kinetic-Powered Fragrance Applicator",
-    role: "Team member · Team Anchor, luxury beauty-tech case for YSL / L'Oréal Luxe",
-    img: "assets/img/resonance.jpg",
-    summary: "Hardware concept that turns a passive perfume spray into a 5-second grounding ritual, powered entirely by kinetic energy harvested when the device docks.",
-    metrics: ["Faraday kinetic harvester", "Lithium-free supercapacitor", "Refill ecosystem"],
-    sections: {
-      "Engineering": ["A magnetic dock drives a piston and Faraday coil to generate power, stored in a graphene supercapacitor (no lithium).", "GSR electrodes sense stress, a 60 BPM haptic actuator calms the user, and a microfluidic vacuum valve protects the formula from air.", "A universal retrofit collar fits existing glass bottles, so no new glass tooling is needed."],
-    },
-    tools: ["Product engineering", "Energy harvesting", "Sensors", "Go-to-market"],
-  },
-  {
-    id: "adstrovert", cat: "leadership",
-    title: "Adstrovert: Out-of-Home Advertising Marketplace",
-    role: "Strategy & Business Development Lead · Team Atas",
+    id: "adstrovert", group: "business",
+    title: "Adstrovert: marketplace for outdoor advertising",
+    result: "Entered an unfamiliar industry, interviewed stakeholders and defined a marketplace for unsold billboard space.",
+    context: "Strategy and business development lead, Team Atas",
+    key: ["2", "investors interested"],
     img: "assets/img/adstrovert.jpg",
-    summary: "Entered an industry I had no background in, interviewed stakeholders, and defined a marketplace connecting SMEs with Malaysia's fragmented billboard and DOOH owners.",
-    metrics: ["125+ media owners", "~35% unsold inventory", "2 investors interested"],
     sections: {
-      "Highlights": ["Validated the market gap through primary discussions with advertising stakeholders.", "Defined the marketplace model (10–15% commission, enablement and promotion fees) and a phased go-to-market plan.", "Secured interest from 2 investors for post-competition mentoring."],
+      "Highlights": ["Malaysia has 125+ independent media owners and about 35% unsold outdoor inventory in the Klang Valley.", "Defined a 10–15% commission model and phased go-to-market; two investors offered post-competition mentoring."],
     },
-    tools: ["Market research", "Business modelling", "Stakeholder interviews"],
+    tools: "Market research, stakeholder interviews, business modelling",
   },
   {
-    id: "splendid", cat: "leadership",
-    title: "Splendid 360: Succession & Asset-Protection Ecosystem",
-    role: "Team member · Team APTaytude, inter-university corporate case study",
+    id: "splendid", group: "business",
+    title: "Splendid 360: succession planning for family SMEs",
+    result: "Lifecycle strategy for a trust company, from founding to handover, through a partner network.",
+    context: "Team APTaytude, inter-university corporate case study",
+    key: ["60", "phase-1 client contracts"],
     img: "assets/img/splendid.jpg",
-    summary: "Strategy for a trust company to serve family-owned SMEs across their whole lifecycle, from founding to succession, through a multi-partner advisory network.",
-    metrics: ["1.2M → 10,800 SMEs", "60 phase-1 contracts", "SWOT & risk plan"],
     sections: {
-      "Highlights": ["Diagnosed growth blockers: reliance on word-of-mouth, regulatory limits on promotion, and succession freezes under the Wills Act 1959.", "Designed four pillars (alliance network, lifecycle integration, community and a CRM intelligence platform) with a sized TAM/SAM/SOM."],
+      "Highlights": ["Sized the market from 1.2 million SMEs to 10,800 family-owned targets.", "Four pillars: alliance network, lifecycle integration, community and a CRM platform, with SWOT and risk plan."],
     },
-    tools: ["Corporate strategy", "Market sizing", "Risk analysis"],
+    tools: "Corporate strategy, market sizing, risk analysis",
+  },
+  {
+    id: "resonance", group: "business",
+    title: "Résonance: kinetic-powered fragrance applicator",
+    result: "Battery-free device concept for YSL that turns a perfume spray into a short calming ritual.",
+    context: "Team Anchor, luxury beauty-tech case",
+    img: "assets/img/resonance.jpg",
+    sections: {
+      "Engineering": ["Docking drives a Faraday coil; a graphene supercapacitor stores the charge, so there is no lithium battery.", "Skin sensors read stress, a 60 BPM haptic pulse calms the user and a vacuum valve protects the formula. A universal collar fits existing bottles."],
+    },
+    tools: "Product engineering, energy harvesting, sensors, go-to-market",
   },
 ];
 
-
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const splitRole = r => { const [role, ...ctx] = r.split(" · "); return { role, ctx: ctx.join(", ") }; };
-const rank = id => PROJECTS.findIndex(p => p.id === id) + 1;
 
-// Project list, grouped by category; each project keeps its overall priority number.
-const list = document.getElementById("project-list");
-list.innerHTML = CATEGORIES.map(c => {
-  const items = PROJECTS.filter(p => p.cat === c.id);
-  return `<section class="formation" id="f-${c.id}" aria-labelledby="h-${c.id}">
-    <header class="formation-head">
-      <h3 id="h-${c.id}">${c.label}</h3>
-      <p>${c.note}</p>
-    </header>
-    <ol class="rows">${items.map(p => {
-      const { role, ctx } = splitRole(p.role);
-      const pic = p.img
-        ? `<img src="${p.img}" alt="" loading="lazy"${p.pos ? ` style="object-position:${p.pos}"` : ""}>`
-        : `<span class="noimg">${esc(p.placeholder)}</span>`;
-      return `<li class="row${p.featured ? " feature" : ""}">
-        <button type="button" data-id="${p.id}" aria-haspopup="dialog">
-          <span class="row-pic">${pic}</span>
-          <span class="row-text">
-            <span class="row-rank">Priority ${rank(p.id)}${p.award ? `<span class="row-award">${esc(p.award)}</span>` : ""}</span>
-            <span class="row-title">${esc(p.title)}</span>
-            <span class="row-role"><strong>${esc(role)}</strong>${ctx ? `, ${esc(ctx)}` : ""}</span>
-            <span class="row-sum">${esc(p.summary)}</span>
-          </span>
-          <span class="row-nums">${p.metrics.map(m => `<span>${esc(m)}</span>`).join("")}</span>
-        </button>
-      </li>`;
-    }).join("")}</ol>
-  </section>`;
-}).join("");
+function projectHTML(p) {
+  const pics = [p.img && `<img src="${p.img}" alt="" loading="lazy">`, p.photo && `<img src="${p.photo}" alt="${esc(p.photoAlt)}" loading="lazy">`].filter(Boolean);
+  return `<details class="proj" id="p-${p.id}">
+    <summary>
+      <span class="proj-main">
+        <span class="proj-title">${esc(p.title)}</span>
+        <span class="proj-result">${esc(p.result)}</span>
+        <span class="proj-context">${esc(p.context)}${p.award ? ` <span class="award">${esc(p.award)}</span>` : ""}</span>
+      </span>
+      ${p.key ? `<span class="proj-key"><strong>${esc(p.key[0])}</strong>${esc(p.key[1])}</span>` : `<span class="proj-key"></span>`}
+      <span class="proj-toggle" aria-hidden="true"></span>
+    </summary>
+    <div class="proj-body">
+      <div class="proj-text">
+        ${p.kpis ? `<dl class="kpis">${p.kpis.map(([v, l]) => `<div><dt>${esc(v)}</dt><dd>${esc(l)}</dd></div>`).join("")}</dl>` : ""}
+        ${Object.entries(p.sections).map(([h, items]) => `<h4>${esc(h)}</h4><ul>${items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`).join("")}
+        <p class="tools"><strong>Tools and methods:</strong> ${esc(p.tools)}</p>
+      </div>
+      ${pics.length ? `<div class="proj-pics">${pics.join("")}</div>` : ""}
+    </div>
+  </details>`;
+}
 
-// Jump links to each category
-document.getElementById("jump").innerHTML = CATEGORIES.map(c =>
-  `<a href="#f-${c.id}">${c.label} <span>${PROJECTS.filter(p => p.cat === c.id).length}</span></a>`).join("");
+for (const g of GROUPS) {
+  const host = document.getElementById(`list-${g.section}`);
+  const items = PROJECTS.filter(p => p.group === g.id);
+  host.insertAdjacentHTML("beforeend",
+    `${g.label ? `<h3 class="group">${g.label}</h3>` : ""}<div class="projs">${items.map(projectHTML).join("")}</div>`);
+}
 
-// Project detail dialog
-const modal = document.getElementById("modal");
-const body = document.getElementById("modal-body");
-list.addEventListener("click", e => {
-  const b = e.target.closest("button[data-id]"); if (!b) return;
-  const p = PROJECTS.find(x => x.id === b.dataset.id);
-  const { role, ctx } = splitRole(p.role);
-  body.innerHTML = `
-    ${p.img ? `<img class="m-img" src="${p.img}" alt="">` : ""}
-    <div class="m-body">
-      <p class="m-kicker">Priority ${rank(p.id)}, ${CATEGORIES.find(c => c.id === p.cat).label.toLowerCase()}${p.award ? `<span class="row-award">${esc(p.award)}</span>` : ""}</p>
-      <h2 id="modal-title">${esc(p.title)}</h2>
-      <p class="m-role"><strong>${esc(role)}</strong>${ctx ? `, ${esc(ctx)}` : ""}</p>
-      <p class="m-sum">${esc(p.summary)}</p>
-      ${p.kpis ? `<dl class="m-kpis">${p.kpis.map(([v, l]) => `<div><dt>${esc(v)}</dt><dd>${esc(l)}</dd></div>`).join("")}</dl>` : ""}
-      ${Object.entries(p.sections).map(([h, items]) => `<h3>${esc(h)}</h3><ul>${items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`).join("")}
-      <h3>Tools and methods</h3><p class="m-tools">${p.tools.map(esc).join(", ")}</p>
-    </div>`;
-  modal.showModal();
-  modal.scrollTop = 0;
-});
-modal.querySelector(".modal-close").addEventListener("click", () => modal.close());
-modal.addEventListener("click", e => { if (e.target === modal) modal.close(); });
+// Links elsewhere on the page (e.g. "Selected results") open the matching project.
+function openFromHash() {
+  const el = location.hash.startsWith("#p-") && document.querySelector(location.hash);
+  if (el) { el.open = true; el.scrollIntoView({ block: "start" }); }
+}
+addEventListener("hashchange", openFromHash);
 
-// Depth track: maps scroll position to 0–1,200 m (Limbayong's deepest water depth)
+// Depth track: maps how far down the page you are to 0–1,200 m,
+// the deepest water at Limbayong (the PetroX field).
 const MAX_DEPTH = 1200;
 const marker = document.getElementById("rail-marker");
 const readout = document.getElementById("rail-depth");
 const bar = document.getElementById("depth-bar");
 const tops = document.getElementById("rail-tops");
-const sections = [...document.querySelectorAll("[data-top]")];
+const stops = [...document.querySelectorAll("[data-top]")];
 
-// A section's "top" sits at its share of the page; the marker reads a point that
-// travels from the top to the bottom of the viewport as you scroll, so it reaches every top.
 function layoutTops() {
   const H = document.documentElement.scrollHeight;
   const trackH = tops.parentElement.clientHeight;
   let last = -Infinity;
-  tops.innerHTML = sections.map(s => {
-    const f = Math.min(1, Math.max(0, s.offsetTop - 60) / H);
-    const y = Math.min(trackH, Math.max(f * trackH, last + 34));
+  tops.innerHTML = stops.map(s => {
+    const f = Math.min(1, Math.max(0, s.offsetTop - 64) / H);
+    const y = Math.min(trackH, Math.max(f * trackH, last + 30));
     last = y;
-    return `<a href="#${s.id}" style="top:${y.toFixed(1)}px"><span class="rail-m">${Math.round(f * MAX_DEPTH).toLocaleString("en")} m</span>${s.dataset.top}</a>`;
+    return `<a href="#${s.id}" style="top:${y.toFixed(1)}px"><span>${Math.round(f * MAX_DEPTH).toLocaleString("en")} m</span>${s.dataset.top}</a>`;
   }).join("");
 }
 function onScroll() {
@@ -292,10 +281,12 @@ function onScroll() {
   readout.textContent = Math.round(f * MAX_DEPTH).toLocaleString("en") + " m";
   bar.style.transform = `scaleX(${p})`;
 }
+const relayout = () => { layoutTops(); onScroll(); };
 addEventListener("scroll", onScroll, { passive: true });
-addEventListener("resize", () => { layoutTops(); onScroll(); });
-addEventListener("load", () => { layoutTops(); onScroll(); });
-layoutTops(); onScroll();
+addEventListener("resize", relayout);
+addEventListener("load", () => { relayout(); openFromHash(); });
+document.querySelectorAll(".proj").forEach(d => d.addEventListener("toggle", relayout));
+relayout();
 
 // Mobile menu
 const links = document.querySelector(".nav-links");
