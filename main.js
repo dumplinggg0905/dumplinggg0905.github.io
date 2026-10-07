@@ -1,10 +1,10 @@
 // Projects are listed in priority order inside each group.
 // `group` must match an id in GROUPS; `section` decides which part of the page a group sits in.
 const GROUPS = [
-  { id: "wells", section: "engineering", label: "Wells & offshore", note: "Diagnosing wells, reading logs and designing for the open sea." },
-  { id: "concepts", section: "engineering", label: "Field technology concepts", note: "Spotting a field problem and leading the idea from first sketch to pitch." },
-  { id: "subsurface", section: "engineering", label: "Subsurface analysis", note: "Simulation studies that show how I work with data." },
-  { id: "people", section: "people", label: null },
+  { id: "wells", section: "engineering", layout: "feature", label: "Wells & offshore", note: "Diagnosing wells, reading logs and designing for the open sea." },
+  { id: "concepts", section: "engineering", layout: "compact", pair: "eng-pair", label: "Field technology concepts", note: "Leading an idea from field problem to pitch." },
+  { id: "subsurface", section: "engineering", layout: "compact", pair: "eng-pair", label: "Subsurface analysis", note: "Simulation studies that show how I work with data." },
+  { id: "people", section: "people", layout: "grid", label: null },
 ];
 
 const PROJECTS = [
@@ -17,7 +17,7 @@ const PROJECTS = [
     context: "IEM Oil & Gas Platform Design Competition 2026, team of 4",
     award: "3rd place nationally",
     key: ["1:175", "model, built and tested"],
-    img: "assets/img/petrox.jpg", photo: "assets/img/iem-models.jpg", photoAlt: "Platform scale models at the IEM grand final",
+    img: "assets/img/petrox.jpg", picBg: "#0e1d33", photo: "assets/img/iem-models.jpg", photoAlt: "Platform scale models at the IEM grand final",
     kpis: [["40,000 BOPD", "oil, plus 180 MMSCFD gas, from 10 subsea wells"], ["up to 87.2%", "lower peak heave response from the bilge box (published CFD)"], ["RM335", "model build cost, against a RM500 limit"], ["185%", "reserve buoyancy in the model"]],
     sections: {
       "My ideas": [
@@ -239,6 +239,35 @@ const ALSO = "Also: Résonance, a battery-free fragrance applicator concept for 
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
+const detailHTML = p => `
+  ${Object.entries(p.sections).map(([h, items]) => `<h4>${esc(h)}</h4><ul>${items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`).join("")}
+  <p class="tools"><strong>Tools and methods:</strong> ${esc(p.tools)}</p>`;
+const kpiHTML = p => p.kpis ? `<dl class="kpis">${p.kpis.map(([v, l]) => `<div><dt>${esc(v)}</dt><dd>${esc(l)}</dd></div>`).join("")}</dl>` : "";
+const metaHTML = p => `
+  <span class="proj-result">${esc(p.result)}</span>
+  <span class="proj-role"><strong>My role:</strong> ${esc(p.role)}</span>
+  <span class="proj-context">${esc(p.context)}${p.award ? ` <span class="award">${esc(p.award)}</span>` : ""}</span>`;
+
+// Flagship projects: image always visible, key numbers up front, full study on request.
+function featureHTML(p) {
+  return `<article class="feature" id="p-${p.id}">
+    <figure class="feature-pic"${p.picBg ? ` style="background:${p.picBg}"` : ""}><img src="${p.img}" alt="" loading="lazy"></figure>
+    <div class="feature-text">
+      <h4 class="proj-title">${esc(p.title)}</h4>
+      <p class="proj-meta">${metaHTML(p)}</p>
+      ${kpiHTML(p)}
+      <details class="more">
+        <summary><span class="more-open">Show the full study</span><span class="more-close">Hide the full study</span></summary>
+        <div class="more-body">
+          ${detailHTML(p)}
+          ${p.photo ? `<img class="more-photo" src="${p.photo}" alt="${esc(p.photoAlt)}" loading="lazy">` : ""}
+        </div>
+      </details>
+    </div>
+  </article>`;
+}
+
+// Everything else: one compact row that expands in place.
 function projectHTML(p) {
   const pics = [p.img && `<img src="${p.img}" alt="" loading="lazy"${p.pos ? ` style="object-position:${p.pos}"` : ""}>`,
                 p.photo && `<img src="${p.photo}" alt="${esc(p.photoAlt)}" loading="lazy">`].filter(Boolean);
@@ -246,37 +275,41 @@ function projectHTML(p) {
     <summary>
       <span class="proj-main">
         <span class="proj-title">${esc(p.title)}</span>
-        <span class="proj-result">${esc(p.result)}</span>
-        <span class="proj-role"><strong>My role:</strong> ${esc(p.role)}</span>
-        <span class="proj-context">${esc(p.context)}${p.award ? ` <span class="award">${esc(p.award)}</span>` : ""}</span>
+        ${metaHTML(p)}
+        ${p.key ? `<span class="proj-key"><strong>${esc(p.key[0])}</strong> ${esc(p.key[1])}</span>` : ""}
       </span>
-      <span class="proj-key">${p.key ? `<strong>${esc(p.key[0])}</strong>${esc(p.key[1])}` : ""}</span>
       <span class="proj-toggle" aria-hidden="true"></span>
     </summary>
     <div class="proj-body">
-      <div class="proj-text">
-        ${p.kpis ? `<dl class="kpis">${p.kpis.map(([v, l]) => `<div><dt>${esc(v)}</dt><dd>${esc(l)}</dd></div>`).join("")}</dl>` : ""}
-        ${Object.entries(p.sections).map(([h, items]) => `<h4>${esc(h)}</h4><ul>${items.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`).join("")}
-        <p class="tools"><strong>Tools and methods:</strong> ${esc(p.tools)}</p>
-      </div>
+      ${kpiHTML(p)}
+      ${detailHTML(p)}
       ${pics.length ? `<div class="proj-pics">${pics.join("")}</div>` : ""}
     </div>
   </details>`;
 }
 
+const groupHead = g => g.label ? `<div class="group-head"><h3 class="group">${g.label}</h3><p>${g.note}</p></div>` : "";
 for (const g of GROUPS) {
-  const host = document.getElementById(`list-${g.section}`);
   const items = PROJECTS.filter(p => p.group === g.id);
-  host.insertAdjacentHTML("beforeend",
-    (g.label ? `<div class="group-head"><h3 class="group">${g.label}</h3><p>${g.note}</p></div>` : "") +
-    `<div class="projs">${items.map(projectHTML).join("")}</div>`);
+  let host = document.getElementById(`list-${g.section}`);
+  if (g.pair) {
+    host = document.getElementById(g.pair) || (host.insertAdjacentHTML("beforeend", `<div class="pair" id="${g.pair}"></div>`), document.getElementById(g.pair));
+    host.insertAdjacentHTML("beforeend", `<div class="pair-col">${groupHead(g)}<div class="projs">${items.map(projectHTML).join("")}</div></div>`);
+  } else if (g.layout === "feature") {
+    host.insertAdjacentHTML("beforeend", `${groupHead(g)}<div class="features">${items.map(featureHTML).join("")}</div>`);
+  } else {
+    host.insertAdjacentHTML("beforeend", `${groupHead(g)}<div class="projs${g.layout === "grid" ? " grid" : ""}">${items.map(projectHTML).join("")}</div>`);
+  }
 }
 document.getElementById("list-people").insertAdjacentHTML("beforeend", `<p class="also">${esc(ALSO)}</p>`);
 
 // Links elsewhere on the page (e.g. "Selected results") open the matching project.
 function openFromHash() {
   const el = location.hash.startsWith("#p-") && document.querySelector(location.hash);
-  if (el) { el.open = true; el.scrollIntoView({ block: "start" }); }
+  if (!el) return;
+  const d = el.matches("details") ? el : el.querySelector("details");
+  if (d) d.open = true;
+  el.scrollIntoView({ block: "start" });
 }
 addEventListener("hashchange", openFromHash);
 
@@ -313,7 +346,7 @@ const relayout = () => { layoutTops(); onScroll(); };
 addEventListener("scroll", onScroll, { passive: true });
 addEventListener("resize", relayout);
 addEventListener("load", () => { relayout(); openFromHash(); });
-document.querySelectorAll(".proj").forEach(d => d.addEventListener("toggle", relayout));
+document.querySelectorAll("main details").forEach(d => d.addEventListener("toggle", relayout));
 relayout();
 
 // Mobile menu
