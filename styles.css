@@ -210,7 +210,7 @@ main > * { max-width: 1120px; }
   .nav-links a { padding: 11px 0; border-top: 1px solid var(--rule); }
   .nav-links .nav-cv { border: 0; border-top: 1px solid var(--rule); border-radius: 0; padding: 11px 0; }
   .hero-side { grid-template-columns: 1fr; gap: 16px; }
-  .portrait { width: 140px; }
+  .portrait { width: 190px; }
   .glance div { grid-template-columns: 84px minmax(0, 1fr); gap: 10px; }
   .proj summary { grid-template-columns: minmax(0, 1fr) 22px; gap: 14px; }
   .proj-key { grid-column: 1; grid-row: 2; display: flex; align-items: baseline; gap: 8px; }
