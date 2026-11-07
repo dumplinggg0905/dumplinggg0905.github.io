@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-type="software" data-radius="round" data-buttons="pill" data-motion>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <title>Kita Main Control Tower</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Clickable prototype of the Kita Main operations system: one household record connecting verification, cohorts, kit stock, vendor packing, courier proof of delivery and parent feedback.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+  <!-- Kita Main Operations Control Tower: prototype for the C4I 2026 Case 2 deck.
+       Kind: software (an internal operations app, not a marketing page). Accent: the deck's red #b91b1c, type Poppins + Inter.
+       Every record is illustrative. Screens are hash routes so each can be screenshotted by URL. -->
+  <a class="skip" href="#content">Skip to content</a>
+  <div class="app">
+    <aside class="side" id="side" aria-label="Sidebar"></aside>
+    <div class="main">
+      <header class="top" id="top"></header>
+      <main class="content" id="content" tabindex="-1"></main>
+    </div>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Record detail"></aside>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <noscript><p style="padding:24px">This prototype needs JavaScript to show its screens.</p></noscript>
+  <script src="assets/glyphs.js"></script>
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
