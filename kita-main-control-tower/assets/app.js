@@ -53,6 +53,18 @@
   const routeOf = a => S.routeOf[a.id] || a.route;
   const queueLeft = () => S.left.green + S.left.amber + S.left.red;
   const openCases = () => S.cases.filter(c => c.tone !== 'ok').length;
+  // Plain-language stock status: free to use (in stock minus set aside) plus arriving, against the 8-week need.
+  const stockOf = s => {
+    const extra = s.sku === 'TOY-034' && S.subUsed ? 120 : 0;
+    const free = s.a + s.b - s.alloc - extra;
+    const have = free + s.inc;
+    if (!s.need) return { free, have, tone: 'line', label: s.sub ? `Backup for ${s.sub}` : 'Not needed' };
+    if (s.sku === 'TOY-031' && S.subUsed) return { free, have, tone: 'ok', label: 'Covered by substitute' };
+    if (have < s.need) return { free, have, tone: 'bad', label: `Short by ${fmt(s.need - have)}` };
+    if (have < s.need * 1.15) return { free, have, tone: 'warn', label: 'Running low' };
+    return { free, have, tone: 'ok', label: 'Enough' };
+  };
+  const stockRisks = () => D.stock.filter(s => ['bad', 'warn'].includes(stockOf(s).tone)).length;
 
   /* ---------- routing ---------- */
   const route = () => {
@@ -68,15 +80,16 @@
     const vendor = r.view === 'vendor';
     const cur = (v, t) => (r.view === v && (t === undefined || (r.tab || '') === t)) ? ' aria-current="page"' : '';
     if (vendor) {
-      const t = r.tab || 'pack';
+      const t = r.tab || 'today';
       const vi = (k, glyph, label, badge) => `<a class="nav-item" href="#/vendor/${k}"${t === k ? ' aria-current="page"' : ''}>${ic(glyph)}<span class="nav-item__label">${label}</span>${badge ? `<span class="nav-item__badge">${badge}</span>` : ''}</a>`;
       return `
-        <a class="brand" href="#/vendor/pack">${LOGO_SLOT}<span class="brand__text"><span class="brand__name">Kita Main</span><br><span class="brand__sub">Vendor portal</span></span></a>
+        <a class="brand" href="#/vendor">${LOGO_SLOT}<span class="brand__text"><span class="brand__name">Kita Main</span><br><span class="brand__sub">Vendor portal</span></span></a>
         <nav aria-label="Vendor portal"><div class="nav-group"><div class="nav-group__label">Vendor A work</div>
-          ${vi('pack', 'package-check', 'Pack and inspect', 46)}
-          ${vi('receive', 'warehouse', 'Receive stock', 1)}
-          ${vi('confirm', 'clipboard-check', 'Confirm batches', S.confirm.sent ? 0 : 1)}
-          ${vi('dispatch', 'truck', 'Hand over to courier', S.disp.done ? 0 : 1)}
+          ${vi('today', 'layout-dashboard', 'Today', vJobs().length)}
+          ${vi('pack', 'package-check', 'Pack boxes', 188 - S.pack.done)}
+          ${vi('receive', 'warehouse', 'Count a delivery', S.grn.sent ? 0 : 1)}
+          ${vi('confirm', 'clipboard-check', 'New work', S.confirm.sent || S.confirm.flagged ? 0 : 1)}
+          ${vi('dispatch', 'truck', 'Courier pickup', S.disp.done ? 0 : 1)}
           ${vi('issue', 'triangle-alert', 'Report a problem')}
         </div>
         <div class="nav-group"><div class="nav-group__label">Switch view</div>
@@ -95,12 +108,12 @@
       </div>
       <div class="nav-group"><div class="nav-group__label">Four engines</div>
         ${item('#/demand', num(1), 'Demand and cohorts', cur('demand'), queueLeft() || '', false)}
-        ${item('#/inventory', num(2), 'Kits and inventory', cur('inventory'), S.subUsed ? 1 : 2, !S.subUsed)}
+        ${item('#/inventory', num(2), 'Kits and inventory', cur('inventory'), stockRisks(), !S.subUsed)}
         ${item('#/fulfilment', num(3), 'Fulfilment and delivery', cur('fulfilment'), 3, true)}
         ${item('#/engagement', num(4), 'Parent engagement', cur('engagement'), openCases(), true)}
       </div>
       <div class="nav-group"><div class="nav-group__label">Partners and setup</div>
-        ${item('#/vendor/pack', ic('store'), 'Vendor portal', '')}
+        ${item('#/vendor', ic('store'), 'Vendor portal', '')}
         ${item('#/system', ic('layers'), 'System map', cur('system'))}
       </div></nav>
       <div class="side__foot">
@@ -160,11 +173,12 @@
     return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Boxes due each week by kit stage, against packing capacity of 180 a week">${g}</svg>`;
   }
 
-  function dispatchCard() {
+  function dispatchCard(foot = '') {
     return `<section class="card">
       <div class="card__head"><div class="grow"><div class="card__title">Boxes due, next 8 weeks</div></div>
-        <div class="legend"><span><b style="background:var(--k1)"></b>Kit 01</span><span><b style="background:var(--k2)"></b>Kit 02</span><span><b style="background:var(--k3)"></b>Kit 03</span><span><b class="line-key"></b>Capacity 180 a week</span></div></div>
+        <div class="legend"><span><b style="background:var(--k1)"></b>Kit 01</span><span><b style="background:var(--k2)"></b>Kit 02</span><span><b style="background:var(--k3)"></b>Kit 03</span><span><b class="line-key"></b>Packing capacity, 180 a week</span></div></div>
       <div class="card__body">${dispatchChart()}</div>
+      ${foot ? `<div class="card__foot"><span class="hint">${foot}</span></div>` : ''}
     </section>`;
   }
 
@@ -190,13 +204,22 @@
 
   /* ---------- overview ---------- */
   function overview() {
-    const eng = (n, href, glyph, big, label, alert, alertTone, kpis) => `
-      <a class="card engine span-3" href="${href}">
-        <div class="engine__top">${num(n)}<span>${ENG[n]}</span></div>
-        <div><div class="engine__num">${big}</div><div class="engine__label">${label}</div></div>
-        <div class="engine__alert"><span class="dot dot--${alertTone}"></span><span>${alert}</span></div>
-        <div class="engine__kpis">${kpis.map(([v, l]) => `<div><div class="kpi__v">${v}</div><div class="kpi__l">${l}</div></div>`).join('')}</div>
-      </a>`;
+    const ready = S.left.green;
+    const risks = stockRisks();
+    // The four engines as one connected flow (same language as the system map), one number each.
+    const nodes = [
+      [1, '#/demand', fmt(queueLeft()), 'applications to decide', ready ? `${ready} pass every rule, approve in one go` : `${S.left.amber} waiting on parents`, ready ? 'ok' : 'warn'],
+      [2, '#/inventory', String(risks), risks === 1 ? 'item short or running low' : 'items short or running low', S.subUsed ? 'Puppets covered by the substitute' : 'Hand puppets: 120 short for Kit 02', S.subUsed ? 'warn' : 'bad'],
+      [3, '#/fulfilment', '468', 'boxes due in March', '3 deliveries failed twice', 'bad'],
+      [4, '#/engagement', String(openCases()), 'open family cases', '2 past the 48-hour reply', 'warn']
+    ];
+    const flow = `<section class="flow" id="flow" aria-label="The four engines">${nodes.map(([n, href, big, label, note, tone]) => `
+      <a class="flow__node" href="${href}">
+        <span class="flow__head">${num(n)}<span>${ENG[n]}</span></span>
+        <span class="flow__big">${big}</span>
+        <span class="flow__label">${label}</span>
+        <span class="flow__note"><span class="dot dot--${tone}"></span><span>${note}</span></span>
+      </a>`).join('')}</section>`;
     const q = D.priority.map(p => `
       <div class="q-item">
         <span class="q-item__sev">${chip(p.sev, p.sev === 'bad' ? 'Urgent' : 'Attention')}</span>
@@ -204,38 +227,16 @@
           <div class="q-item__meta"><span class="chip chip--line chip--plain">${num(p.engine)} ${ENG[p.engine]}</span><span class="muted">${p.due}</span></div></div>
         <a class="btn btn--sm" href="${p.go}">${p.action}</a>
       </div>`).join('');
-    const y27 = D.trajectory[0].target;
-    const traj = D.trajectory.map(t => `<div class="traj__row"><span class="strong">${t.year}</span><div class="bar bar--accent" style="--v:${t.target / 4500}"><i></i></div><span class="traj__v">${fmt(t.target)}</span></div>`).join('');
-    const ready = S.left.green;
     return `
-      ${head({ title: 'Control tower', sub: `${D.todayLong}. Cohort ${D.cohort.id} is enrolling. Gate review for ${D.cohort.nextId}: 29 March.`,
+      ${head({ title: 'Control tower', sub: `${D.todayLong}. ${D.priority.length} things need a decision today.`,
         actions: queueLeft() ? `<a class="btn btn--primary" href="#/demand">Review ${fmt(queueLeft())} applications</a>` : '' })}
+      ${flow}
       <div class="grid">
-        ${eng(1, '#/demand', 'users', fmt(queueLeft()), 'applications waiting for a decision', ready ? `${ready} pass every rule and can be approved in one batch` : `${S.left.amber} need information, ${S.left.red} need a person`, ready ? 'ok' : 'warn', [['1.6 days', 'median decision time'], [`${fmt(S.enrolled)} / ${D.cohort.cap}`, `${D.cohort.id} enrolled`]])}
-        ${eng(2, '#/inventory', 'boxes', S.subUsed ? '1' : '2', 'stock risks in the next 8 weeks', S.subUsed ? 'Puppet shortfall covered by the approved substitute' : 'Hand puppets 120 short for Kit 02', S.subUsed ? 'ok' : 'bad', [['94%', 'supplier fill rate'], ['5', 'open purchase orders']])}
-        ${eng(3, '#/fulfilment', 'truck', '468', 'boxes due in March, 341 already dispatched', '3 parcels failed delivery twice in Kelantan', 'bad', [['96.4%', 'dispatched on time'], ['98.9%', 'deliveries with proof']])}
-        ${eng(4, '#/engagement', 'message-circle', String(openCases()), 'open family cases, 2 past the 48-hour target', '61% of families answered the last check-in', 'warn', [['97.1%', 'boxes complete and undamaged'], ['4.6 / 5', 'guide rated easy to use']])}
-        <div class="span-8 stack">
-          ${dispatchCard()}
-          <section class="card" id="queue" tabindex="-1">
-            <div class="card__head"><div class="grow"><div class="card__title">Needs a decision</div></div><span class="chip">${D.priority.length} items</span></div>
-            <div class="queue">${q}</div>
-          </section>
-        </div>
-        <div class="span-4 stack">
-          <section class="card">
-            <div class="card__head"><div class="grow"><div class="card__title">New families, 2027</div><div class="card__meta">Verified and enrolled</div></div></div>
-            <div class="card__body">
-              <div class="target__big"><span class="target__num">${fmt(S.enrolled)}</span><span class="muted">of ${fmt(y27)}</span></div>
-              <div class="bar bar--accent mt-12" style="--v:${S.enrolled / y27};height:10px"><i></i><span class="bar__mark" style="--m:.25" title="Plan to end of March: 562"></span></div>
-              <div class="row row--between mt-8"><span class="hint">Plan to end of March: 562</span><span class="hint">${Math.round(S.enrolled / y27 * 100)}%</span></div>
-              <div class="divider mt-16"></div>
-              <div class="traj mt-16">${traj}</div>
-              <p class="hint mt-12">10,000 families and 30,000 boxes over three years, RM7.5m at RM750 a family.</p>
-            </div>
-          </section>
-          ${gateCard(true)}
-        </div>
+        <section class="card span-8" id="queue" tabindex="-1">
+          <div class="card__head"><div class="grow"><div class="card__title">Needs a decision</div></div><span class="chip">${D.priority.length} items</span></div>
+          <div class="queue">${q}</div>
+        </section>
+        <div class="span-4 stack">${gateCard(false)}</div>
       </div>`;
   }
 
@@ -274,8 +275,7 @@
     const nSel = S.selected.size;
     const f = (k, label, n) => `<button class="filter" type="button" data-act="filter" data-f="${k}" aria-pressed="${S.filter === k}">${label} <b>${n}</b></button>`;
     return h + tb + `
-      <section class="card"><div class="stat-row">
-        <div class="stat"><div class="stat__v">1.6 days</div><div class="stat__l">Median time from complete application to decision</div></div>
+      <section class="card"><div class="stat-row stat-row--3">
         <div class="stat"><div class="stat__v">67%</div><div class="stat__l">Complete on the first try</div></div>
         <div class="stat"><div class="stat__v">5.2 min</div><div class="stat__l">Staff time per application</div></div>
         <div class="stat"><div class="stat__v">${fmt(S.left.amber)}</div><div class="stat__l">Waiting on a parent for a document or detail</div></div>
@@ -323,41 +323,36 @@
   /* ---------- engine 2: inventory ---------- */
   function inventory(r) {
     const t = r.tab || '';
-    const tb = tabs('inventory', [['', 'Stock', S.subUsed ? 1 : 2], ['kits', 'Kit specifications'], ['orders', 'Purchase orders and receipts']], t);
+    const tb = tabs('inventory', [['', 'Stock', stockRisks()], ['kits', 'Kit packing lists'], ['orders', 'Orders and deliveries']], t);
     const h = head({ n: 2, title: 'Kits and inventory',
       sub: `Stock held at Vendor A and Vendor B. Last count 15 Mar, 08:00.` });
     if (t === 'kits') return h + tb + kitsTab();
     if (t === 'orders') return h + tb + ordersTab();
     const alert = S.subUsed
-      ? `<div class="note">${ic('circle-check')}<div><b>Covered.</b> 120 Kit 02 boxes in BATCH-2027-034 will use TOY-034 finger puppets, an approved substitute in KIT02-V1. Vendor B’s work order is updated.</div></div>`
+      ? `<div class="note">${ic('circle-check')}<div><b>Covered.</b> 120 Kit 02 boxes will use finger puppets, the approved backup. Vendor B’s packing list is updated.</div></div>`
       : S.poSent
         ? `<div class="note">${ic('circle-check')}<div><b>PO-2027-024 sent</b> for 500 hand puppets, due at Vendor B on 5 Apr. BATCH-2027-034 moves its packing start to 5 Apr.</div></div>`
-        : `<div class="note note--warn">${ic('triangle-alert')}<div style="flex:1"><b>Hand puppets (TOY-031) are 120 short for BATCH-2027-034,</b> which starts packing on 29 Mar. Vendor B holds 240 of the approved substitute TOY-034. A new order would arrive about 5 Apr.
-          <div class="row mt-12"><button class="btn btn--primary btn--sm" type="button" data-act="use-sub">Use the substitute for 120 boxes</button><button class="btn btn--sm" type="button" data-act="po-send">Send PO-2027-024 instead</button></div></div></div>`;
+        : `<div class="note note--warn">${ic('triangle-alert')}<div style="flex:1"><b>Hand puppets are 120 short</b> for the Kit 02 boxes Vendor B starts packing on 29 Mar. Vendor B has 240 finger puppets, the approved backup. A new order would arrive about 5 Apr.
+          <div class="row mt-12"><button class="btn btn--primary btn--sm" type="button" data-act="use-sub">Use finger puppets for 120 boxes</button><button class="btn btn--sm" type="button" data-act="po-send">Order more puppets instead</button></div></div></div>`;
     const rows = D.stock.map(s => {
-      const avail = s.a + s.b - s.alloc;
-      const cover = s.need ? (avail + s.inc) / s.need : null;
-      const short = s.sku === 'TOY-031' && !S.subUsed;
-      const tone = cover === null ? '' : cover < 1 ? (s.sku === 'TOY-031' && S.subUsed ? 'warn' : 'accent') : cover < 1.15 ? 'warn' : 'ok';
+      const st = stockOf(s);
       return `<tr>
-        <td class="mono strong">${s.sku}</td>
-        <td><div class="cell-main" style="font-weight:500">${s.item}</div>${s.sub ? `<div class="cell-sub">Approved substitute for ${s.sub}${S.subUsed ? ', 120 allocated' : ''}</div>` : ''}${s.sku === 'TOY-031' && S.subUsed ? '<div class="cell-sub">Shortfall covered by TOY-034</div>' : ''}</td>
+        <td><div class="cell-main" style="font-weight:500">${s.item}</div><div class="cell-sub mono">${s.sku}</div></td>
         <td>${kitTag(s.kit)}</td>
-        <td class="num">${fmt(s.a)}</td><td class="num">${fmt(s.b)}</td>
-        <td class="num">${s.q ? `<span class="chip chip--warn">${s.q}</span>` : '<span class="muted">0</span>'}</td>
-        <td class="num">${fmt(s.alloc + (s.sku === 'TOY-034' && S.subUsed ? 120 : 0))}</td>
-        <td class="num">${s.inc ? `${fmt(s.inc)}<div class="cell-sub">${s.incDate}</div>` : '<span class="muted">0</span>'}</td>
-        <td class="num strong">${fmt(avail - (s.sku === 'TOY-034' && S.subUsed ? 120 : 0))}</td>
-        <td class="num">${s.need ? fmt(s.need) : '<span class="muted">–</span>'}</td>
-        <td>${cover === null ? chip('line', 'Substitute') : `<div class="cover"><div class="bar bar--${tone}" style="--v:${Math.min(cover / 2, 1)}"><i></i><span class="bar__mark" style="--m:.5"></span></div><span class="cover__v${short ? ' down' : ''}">${cover.toFixed(2)}×</span></div>`}</td>
+        <td class="num strong">${fmt(st.free)}</td>
+        <td class="num">${s.inc ? `${fmt(s.inc)}<div class="cell-sub">by ${s.incDate}</div>` : '<span class="muted">None</span>'}</td>
+        <td class="num">${s.need ? fmt(s.need) : '<span class="muted">None</span>'}</td>
+        <td><div class="enough">${s.need ? `<div class="bar bar--${st.tone === 'bad' ? 'accent' : st.tone}" style="--v:${Math.min(st.have / s.need, 1)}"><i></i></div>` : ''}${chip(st.tone, st.label)}</div></td>
       </tr>`;
     }).join('');
+    const held = D.stock.filter(s => s.q).map(s => `${s.q} ${s.item.toLowerCase()}`).join(', ');
     return h + tb + alert + `
       <section class="card">
-        <div class="card__head"><div class="grow"><div class="card__title">Stock by item</div><div class="card__meta">Available is on hand minus allocated. Cover is available plus incoming, divided by the 8-week need; the tick marks 1.0×.</div></div></div>
+        <div class="card__head"><div class="grow"><div class="card__title">Enough for the next 8 weeks?</div><div class="card__meta">Free to use is what both vendors hold, minus what is already set aside for batches being packed.</div></div></div>
         <div class="table-wrap"><table class="table">
-          <thead><tr><th>SKU</th><th>Item</th><th>Kit</th><th class="num">Vendor A</th><th class="num">Vendor B</th><th class="num">Quarantine</th><th class="num">Allocated</th><th class="num">Incoming</th><th class="num">Available</th><th class="num">Need, 8 weeks</th><th>Cover</th></tr></thead>
+          <thead><tr><th>Item</th><th>Kit</th><th class="num">Free to use</th><th class="num">Arriving</th><th class="num">Needed, next 8 weeks</th><th>Enough?</th></tr></thead>
           <tbody>${rows}</tbody></table></div>
+        ${held ? `<div class="card__foot"><span class="hint"><b>On hold, damaged:</b> ${held} at Vendor B. Not counted until the supplier replaces them.</span></div>` : ''}
       </section>`;
   }
 
@@ -404,25 +399,30 @@
     const tb = tabs('fulfilment', [['', 'Batches'], ['shipments', 'Shipments and proof', 3], ['vendors', 'Vendors']], t);
     const h = head({ n: 3, title: 'Fulfilment and delivery',
       sub: '468 boxes due in March. 341 dispatched, 3 failed delivery twice.',
-      actions: `<a class="btn" href="#/vendor/pack">Open vendor portal</a>` });
+      actions: `<a class="btn" href="#/vendor">Open vendor portal</a>` });
     if (t === 'shipments') return h + tb + shipmentsTab();
     if (t === 'vendors') return h + tb + vendorsTab();
-    const lanes = D.lanes.map(l => `<div class="lane"><div class="lane__head">${l.name}<span class="count">${l.cards.length}</span></div>
-      ${l.cards.map(c => `<button class="card bcard" type="button" data-open="batch:${c.id}">
-        <div class="bcard__id"><span class="mono strong">${c.id}</span></div>
-        ${kitTag(c.kit)}
-        <div class="bcard__meta">${c.vendor}, ${c.cohort.replace(/ wave /, ' wave&nbsp;')}</div>
-        ${c.done !== undefined ? `<div class="bar bar--k${c.kit}" style="--v:${c.done / c.n}"><i></i></div>` : ''}
-        <div class="bcard__meta"><b style="color:var(--ink)">${c.done !== undefined ? `${c.done} of ${c.n}` : `${c.n} boxes`}</b>, due&nbsp;${c.due.replace(' ', '&nbsp;')}</div>
-        <div class="bnote"><span class="dot dot--${c.tone === 'line' ? 'mute' : c.tone}"></span><span>${c.note}</span></div>
-      </button>`).join('')}</div>`).join('');
-    const load = D.vendors.map(v => { const used = v.name === 'Vendor A' ? 88 : 72; return `<div class="load__row"><div class="row row--between"><span class="strong">${v.name}</span><span>${used} of ${v.cap}</span></div><div class="bar bar--${used / v.cap > .85 ? 'warn' : 'ok'}" style="--v:${used / v.cap}"><i></i></div></div>`; }).join('');
-    return h + tb + `<div class="grid"><div class="span-8">${dispatchCard()}</div>
-      <section class="card span-4"><div class="card__head"><div class="grow"><div class="card__title">Packing load this week</div><div class="card__meta">Booked of confirmed capacity</div></div></div>
-        <div class="card__body"><div class="load">${load}</div><div class="divider mt-16"></div>
-          <dl class="kv mt-16" style="grid-template-columns:1fr auto"><dt>Packed today</dt><dd>38</dd><dt>Passed QC first time</dt><dd>97.2%</dd><dt>In rework</dt><dd>4</dd><dt>Ready for pickup</dt><dd>130</dd></dl></div>
-        <div class="card__foot"><span class="hint">Week of 12 Apr needs 12 more boxes than both vendors can pack.</span></div></section></div>
-      <div class="board">${lanes}</div>`;
+    // One month bar: where all of March's boxes are right now (sums to 468).
+    const month = [['Delivered with proof', 298, 'm1'], ['With the courier', 40, 'm2'], ['Packed, waiting for pickup', 42, 'm3'], ['Still to pack', 85, 'm4'], ['Failed twice', 3, 'm5']];
+    const monthCard = `<section class="card"><div class="card__head"><div class="grow"><div class="card__title">Where March’s boxes are</div></div><span class="strong">468 due</span></div>
+      <div class="card__body"><div class="mbar" role="img" aria-label="${month.map(([l, v]) => `${v} ${l.toLowerCase()}`).join(', ')}">${month.map(([, v, c]) => `<i class="${c}" style="flex:${v}"></i>`).join('')}</div>
+        <div class="mlegend">${month.map(([l, v, c]) => `<div><b class="${c}"></b><span class="mlegend__v">${v}</span><span class="mlegend__l">${l}</span></div>`).join('')}</div></div></section>`;
+    // Batches as rows with a five-step tracker instead of a six-lane board.
+    const STEPS = ['Planned', 'Packing', 'Checked', 'With courier', 'Delivered'];
+    const stageOf = { plan: 0, confirm: 0, packing: 1, qc: 2, ready: 3, courier: 3 };
+    const batches = [];
+    D.lanes.forEach(l => l.cards.forEach(c => batches.push({ ...c, step: c.id === 'BATCH-2027-030' ? 5 : stageOf[l.id] })));
+    const rows = batches.map(c => `<tr data-open="batch:${c.id}">
+      <td><button type="button" class="rec" data-open="batch:${c.id}">${c.id}</button><div class="cell-sub" style="margin-top:4px">${kitTag(c.kit)}</div></td>
+      <td><div>${c.vendor}</div><div class="cell-sub">${c.cohort}</div></td>
+      <td><div class="steps"><div class="steps__bar">${STEPS.map((s, i) => `<i class="${i < c.step ? 'is-done' : i === c.step ? 'is-now' : ''}"></i>`).join('')}</div><span class="steps__label">${c.step >= 5 ? 'Delivered' : `${STEPS[c.step]}, step ${c.step + 1} of 5`}</span></div></td>
+      <td class="num">${c.done !== undefined ? `${c.done} of ${c.n}` : `${c.n} boxes`}</td>
+      <td class="nowrap">${c.due}</td>
+      <td><span class="bnote"><span class="dot dot--${c.tone === 'line' ? 'mute' : c.tone}"></span><span>${c.note}</span></span></td></tr>`).join('');
+    return h + tb + monthCard + `
+      <section class="card"><div class="card__head"><div class="grow"><div class="card__title">Batches</div></div></div>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Batch</th><th>Vendor</th><th>Stage</th><th class="num">Boxes</th><th>Due</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table></div></section>
+      ${dispatchCard('This week: Vendor A has 88 of 100 boxes booked, Vendor B 72 of 80. The week of 12 Apr needs 12 more boxes than both can pack.')}`;
   }
 
   function shipmentsTab() {
@@ -600,77 +600,98 @@
 
   /* ---------- vendor portal ---------- */
   function vendor(r) {
-    const t = r.tab || 'pack';
-    const flows = [['pack', 'package-check', 'Pack and inspect', `${188 - S.pack.done} boxes left in batch 031`], ['receive', 'warehouse', 'Receive stock', 'PO-2027-021 due 24 Mar'], ['confirm', 'clipboard-check', 'Confirm batches', S.confirm.sent ? 'Nothing waiting' : '1 batch waiting'], ['dispatch', 'truck', 'Hand over to courier', S.disp.done ? 'Batch 033 with J&T' : 'J&T pickup Tue 14:00'], ['issue', 'triangle-alert', 'Report a problem', 'Shortage, damage, delay']];
-    const titles = { pack: 'Pack and inspect', receive: 'Receive stock', confirm: 'Confirm batches', dispatch: 'Hand over to courier', issue: 'Report a problem' };
+    const t = r.tab || 'today';
+    const titles = { today: 'Today at Vendor A', pack: 'Pack boxes', receive: 'Count a delivery', confirm: 'New work to accept', dispatch: 'Courier pickup', issue: 'Report a problem' };
     const subs = {
-      pack: `BATCH-2027-031, Kit 01 Explore. ${188 - S.pack.done} boxes left, due 18 Mar.`,
-      receive: 'PO-2027-021 from Supplier S-01 arrived today.',
-      confirm: S.confirm.sent ? 'Nothing waiting.' : '1 batch waiting for your answer.',
-      dispatch: S.disp.done ? 'BATCH-2027-033 is with J&T.' : 'J&T pickup Tuesday 16 Mar, 14:00.',
-      issue: 'Goes to the Kita Main manager. Reply within 24 hours.'
+      today: `${D.todayLong}. ${vJobs().length} jobs, in the order to do them.`,
+      pack: `Kit 01 Explore boxes for batch 031. ${188 - S.pack.done} left, finish by Thursday 18 March.`,
+      receive: 'Kit 01 items from Supplier S-01 arrived today. Count them before packing any.',
+      confirm: S.confirm.sent ? 'Nothing waiting.' : 'YGG asks: can you pack this batch on time?',
+      dispatch: S.disp.done ? 'Batch 033 is with J&T.' : 'J&T collects 130 Kit 03 boxes on Tuesday 16 March, 14:00.',
+      issue: 'Goes to the Kita Main manager, who replies within 24 hours.'
     };
-    const tiles = `<div class="v-flows">${flows.map(([k, g, a, b]) => `<a class="card v-flow" href="#/vendor/${k}"${t === k ? ' aria-current="page"' : ''}><div class="v-flow__top"><span class="v-flow__icon">${ic(g)}</span></div><div class="v-flow__t">${a}</div><div class="v-flow__s">${b}</div></a>`).join('')}</div>`;
-    const h = head({ title: titles[t], sub: subs[t] });
-    const body = { pack: vPack, receive: vReceive, confirm: vConfirm, dispatch: vDispatch, issue: vIssue }[t] || vPack;
-    return h + tiles + body();
+    const k = titles[t] ? t : 'today';
+    const body = { today: vToday, pack: vPack, receive: vReceive, confirm: vConfirm, dispatch: vDispatch, issue: vIssue }[k];
+    return head({ title: titles[k], sub: subs[k] }) + body();
+  }
+
+  // The vendor's day as an ordered job list: one plain sentence and one button per job.
+  function vJobs() {
+    return [
+      { href: '#/vendor/pack', title: 'Pack Kit 01 boxes', what: `${188 - S.pack.done} of 188 left in batch 031`, when: 'Finish by Thu 18 Mar', btn: 'Continue packing', st: 'In progress', tone: 'info', prog: S.pack.done / 188 },
+      S.disp.done ? null : { href: '#/vendor/dispatch', title: 'Get 130 boxes ready for J&T', what: 'Kit 03 boxes from batch 033, all checked', when: 'Pickup Tue 16 Mar, 14:00', btn: 'Prepare pickup', st: 'Tomorrow', tone: 'warn' },
+      S.grn.sent ? null : { href: '#/vendor/receive', title: 'Count a supplier delivery', what: 'Kit 01 items from Supplier S-01', when: 'Arrived today', btn: 'Count delivery', st: 'New', tone: 'warn' },
+      S.confirm.sent || S.confirm.flagged ? null : { href: '#/vendor/confirm', title: 'Accept new work', what: '188 Kit 01 boxes for batch 035', when: 'Answer by Wed 17 Mar', btn: 'Answer YGG', st: 'Waiting', tone: 'line' }
+    ].filter(Boolean);
+  }
+
+  function vToday() {
+    const js = vJobs();
+    return `<div class="grid">
+      <section class="card span-8" style="align-self:start"><ol class="jobs">${js.map((j, i) => `<li class="job">
+        <span class="job__n">${i + 1}</span>
+        <div class="job__main"><div class="job__t">${j.title}</div><div class="job__s">${j.what}</div>${j.prog !== undefined ? `<div class="bar bar--k1 mt-8" style="--v:${j.prog}"><i></i></div>` : ''}</div>
+        <div class="job__when">${chip(j.tone, j.st)}<span class="hint">${j.when}</span></div>
+        <a class="btn${i === 0 ? ' btn--primary' : ''}" href="${j.href}">${j.btn}</a></li>`).join('')}</ol>
+        <div class="card__foot"><span class="hint">Short of stock, a damaged box, or the courier did not come?</span><a class="btn btn--sm" href="#/vendor/issue">Report a problem</a></div></section>
+      <div class="span-4 stack">
+        <section class="card"><div class="big-photo"><img src="assets/img/kit-box-open.webp" alt="A finished Kit 01 box, open, with stacking rings, two soft balls and board books" width="1125" height="1088"></div>
+          <div class="card__head card__head--flat"><div class="grow"><div class="card__title">A finished Kit 01 box</div><div class="card__meta">Approved by YGG on 15 March</div></div></div></section>
+        <section class="card"><div class="card__head"><div class="grow"><div class="card__title">Three rules</div></div></div>
+          <div class="card__body"><ol class="rules-list"><li>Pack only what the packing list shows.</li><li>Someone else checks every box before it is sealed.</li><li>Family details never leave this portal.</li></ol></div></section>
+      </div></div>`;
   }
 
   function vPack() {
     const p = S.pack;
-    const items = [
-      ['i1', 'TOY-022', 'Textured sensory balls (set of 4)', 1],
-      ['i2', 'TOY-011', 'Stacking rings', 1],
-      ['i3', 'BOK-101', 'Touch-and-feel board book (BM)', 1],
-      ['i4', 'GDE-01', 'Explore parent play guide', 1]
-    ];
-    const checks = [
-      ['c1', 'Every item checked for damage and cleanliness', 'Anything damaged goes back to quarantine with a photo'],
-      ['c2', `Delivery label matches KM-H-2027-0${p.box}`, 'No child’s name or programme details on the outside'],
-      ['c3', 'Protective fill added and box sealed with Kita Main tape', 'Same box size for every Kit 01']
-    ];
+    // Guided packing: five steps in plain words; codes stay small. The box can only be marked ready when all are done.
+    const items = [['i1', 'TOY-022', 'Sensory balls, set of 4', 1], ['i2', 'TOY-011', 'Stacking rings', 1], ['i3', 'BOK-101', 'Touch-and-feel book (BM)', 1], ['i4', 'GDE-01', 'Explore play guide', 1]];
     const qcOk = p.checker === 'VA-02';
-    const doneCount = items.filter(([k]) => p.checks[k]).length + checks.filter(([k]) => p.checks[k]).length + (qcOk ? 1 : 0);
+    const steps = [['Scan the label', true], ['Put the items in', items.every(([k]) => p.checks[k])], ['Check the box', !!(p.checks.c1 && p.checks.c2)], ['Second check', qcOk], ['Seal', !!p.checks.c3]];
+    const cur = steps.findIndex(s => !s[1]);
+    const doneCount = items.filter(([k]) => p.checks[k]).length + ['c1', 'c2', 'c3'].filter(k => p.checks[k]).length + (qcOk ? 1 : 0);
     const total = 8;
-    const itemRow = ([k, sku, name, qty]) => {
+    const tick = (k, t, s) => `<button class="cl${p.checks[k] ? ' is-checked' : ''}" type="button" data-act="pack-check" data-k="${k}">${box(p.checks[k])}<div><div class="cl__t">${t}</div>${s ? `<div class="cl__s">${s}</div>` : ''}</div><span></span></button>`;
+    const itemRow = ([k, code, name, qty]) => {
       if (k === 'i2' && !p.checks.i2) {
-        return `<div class="cl cl--sub" style="cursor:default"><span class="check-box" style="border-color:var(--warn)"></span>
-          <div><div class="cl__t">${sku} ${name} <span class="muted">× ${qty}</span></div><div class="cl__s" style="color:#5c3c00">None left at this station. Choose an approved substitute for KIT01-V2.</div></div>${chip('warn', 'Out')}</div>
-          <div class="sub-pick"><button class="btn btn--sm" type="button" data-act="pack-sub">${ic('repeat')} Use TOY-016 stacking cups (approved)</button><button class="btn btn--sm" type="button" data-act="pack-ask">Something else</button>
-          ${p.subAsk ? `<div class="err" style="flex-basis:100%">${ic('lock')}Only YGG can approve an item that is not on the list. Request SUB-0012 sent to the Kita Main manager; this box waits.</div>` : ''}</div>`;
+        return `<div class="cl cl--sub" style="cursor:default"><span class="check-box" style="border-color:var(--warn)"></span><div><div class="cl__t">${name} <span class="qty">× ${qty}</span></div><div class="cl__s" style="color:#5c3c00">None left at your table.</div></div><span></span></div>
+          <div class="sub-pick"><button class="btn btn--sm" type="button" data-act="pack-sub">Use stacking cups instead (approved)</button><button class="btn btn--sm" type="button" data-act="pack-ask">Ask YGG for something else</button>
+          ${p.subAsk ? `<div class="err" style="flex-basis:100%">${ic('lock')}Only YGG can approve an item that is not on the list. Request SUB-0012 sent; put this box aside for now.</div>` : ''}</div>`;
       }
-      const label = k === 'i2' && p.sub ? `TOY-016 Stacking cups <span class="muted">× 1</span>` : `${sku} ${name} <span class="muted">× ${qty}</span>`;
-      const sub = k === 'i2' && p.sub ? 'Approved substitute for TOY-011, recorded on this box' : 'Scan the barcode or tick';
-      return `<button class="cl${p.checks[k] ? ' is-checked' : ''}" type="button" data-act="pack-check" data-k="${k}">${box(p.checks[k])}<div><div class="cl__t">${label}</div><div class="cl__s">${sub}</div></div>${ic('scan-line', 'ic--sm')}</button>`;
+      const swapped = k === 'i2' && p.sub;
+      return tick(k, `${swapped ? 'Stacking cups' : name} <span class="qty">× ${qty}</span>`, swapped ? 'Approved swap for stacking rings, noted on this box' : `Code ${code}`);
     };
-    return `<div class="pack">
+    return `<ol class="psteps" aria-label="Packing steps">${steps.map(([l, d], i) => `<li class="${d ? 'is-done' : i === cur ? 'is-now' : ''}"><span class="psteps__n">${d ? ic('check', 'ic--sm') : i + 1}</span>${l}</li>`).join('')}</ol>
+      <div class="pack">
       <section class="card">
         <div class="scanbar"><span class="scanbar__qr">${ic('qr-code', 'ic--lg')}</span>
-          <div style="flex:1;min-width:200px"><div class="mono strong">KM-K-2027-0${p.box}-01</div><div class="hint" style="color:var(--ink-2)">BATCH-2027-031, ${kitTag(1)}, spec KIT01-V2, box ${p.done + 1} of 188</div></div>
-          <button class="btn btn--sm" type="button" data-act="focus-scan">Scan another label</button></div>
+          <div style="flex:1;min-width:200px"><div class="box-no">Box ${p.done + 1} of 188</div><div class="hint" style="color:var(--ink-2)">${kitTag(1)}, label <span class="mono">KM-K-2027-0${p.box}-01</span></div></div>
+          <button class="btn btn--sm" type="button" data-act="focus-scan">Scan a different box</button></div>
         <div class="checklist">
-          <div class="cl-group">Items, from the approved list only</div>
+          <div class="cl-group">Put these in the box</div>
           ${items.map(itemRow).join('')}
-          <div class="cl-group">Box checks</div>
-          ${checks.map(([k, a, b]) => `<button class="cl${p.checks[k] ? ' is-checked' : ''}" type="button" data-act="pack-check" data-k="${k}">${box(p.checks[k])}<div><div class="cl__t">${a}</div><div class="cl__s">${b}</div></div><span></span></button>`).join('')}
-        </div>
-        <div class="qc">
-          <div class="field"><label for="checker">Quality check signed by</label>
-            <select class="select" id="checker" data-act="checker"><option value="">Choose the checker</option><option value="VA-07"${p.checker === 'VA-07' ? ' selected' : ''}>VA-07, packer of this box (you)</option><option value="VA-02"${p.checker === 'VA-02' ? ' selected' : ''}>VA-02, shift supervisor</option></select></div>
-          ${p.checker === 'VA-07' ? `<div class="err">${ic('circle-alert')}The checker must be a different person from the packer.</div>` : qcOk ? `<div class="row" style="color:var(--ok);font-weight:600">${ic('shield-check')} QC passed by VA-02 at 10:42</div>` : ''}
+          <div class="cl-group">Check the box</div>
+          ${tick('c1', 'Nothing is damaged or dirty', 'If something is, put it aside and report it')}
+          ${tick('c2', `The label shows KM-H-2027-0${p.box}`, 'And no child’s name on the outside')}
+          <div class="cl-group">Second check</div>
+          <div class="qc"><div class="qc__q">Who checked this box? It must be someone else.</div>
+            <div class="who-pick"><button class="btn${p.checker === 'VA-02' ? ' is-picked' : ''}" type="button" data-act="pick-checker" data-v="VA-02" aria-pressed="${p.checker === 'VA-02'}">VA-02, shift supervisor</button><button class="btn${p.checker === 'VA-07' ? ' is-picked' : ''}" type="button" data-act="pick-checker" data-v="VA-07" aria-pressed="${p.checker === 'VA-07'}">Me (VA-07)</button></div>
+            ${p.checker === 'VA-07' ? `<div class="err">${ic('circle-alert')}You packed this box, so someone else has to check it.</div>` : qcOk ? `<div class="row" style="color:var(--ok);font-weight:600">${ic('shield-check')} Checked by VA-02</div>` : ''}
+          </div>
+          <div class="cl-group">Seal</div>
+          ${tick('c3', 'Filled the gaps and sealed with Kita Main tape', '')}
         </div>
         <div class="pack__foot">
-          <div style="flex:1;min-width:200px"><div class="row row--between"><span class="strong">${doneCount} of ${total} checks</span><span class="hint">${doneCount === total ? 'Ready' : 'Finish every check to continue'}</span></div><div class="bar bar--ok mt-8" style="--v:${doneCount / total}"><i></i></div></div>
-          <button class="btn btn--primary btn--lg" type="button" data-act="pack-done"${doneCount === total ? '' : ' disabled'}>Mark ready for dispatch</button>
+          <div style="flex:1;min-width:200px"><div class="row row--between"><span class="strong">${doneCount} of ${total} done</span><span class="hint">${doneCount === total ? 'Ready for pickup' : 'Finish every step to continue'}</span></div><div class="bar bar--ok mt-8" style="--v:${doneCount / total}"><i></i></div></div>
+          <button class="btn btn--primary btn--lg" type="button" data-act="pack-done"${doneCount === total ? '' : ' disabled'}>Box ${p.done + 1} is ready</button>
         </div>
       </section>
       <div class="stack">
         <section class="card">
-          <div class="big-photo"><img src="assets/img/kit-box-open.webp" alt="The first finished Kit 01 box of the batch, open, with stacking rings, two soft balls and board books" width="1125" height="1088"></div>
-          <div class="card__head card__head--flat"><div class="grow"><div class="card__title">First finished box, BATCH-2027-031</div></div>${chip('ok', 'Approved')}</div>
-          <div class="card__body"><dl class="kv"><dt>Uploaded</dt><dd>15 Mar, 08:41 by VA-02</dd><dt>Checked by YGG</dt><dd>15 Mar, 09:05</dd><dt>Damage photos</dt><dd>None in this batch</dd><dt>First-pass QC</dt><dd>96.1%, 0 in rework</dd></dl></div>
+          <div class="big-photo"><img src="assets/img/kit-box-open.webp" alt="A finished Kit 01 box, open, with stacking rings, two soft balls and board books" width="1125" height="1088"></div>
+          <div class="card__head card__head--flat"><div class="grow"><div class="card__title">It should look like this</div><div class="card__meta">First finished box of batch 031, approved by YGG</div></div></div>
         </section>
-        <div class="note note--lock">${ic('lock')}<div>You see Vendor A’s work orders only. Eligibility documents, income evidence and parent feedback are never shown in this portal.</div></div>
+        <div class="note note--lock">${ic('lock')}<div>You only see Vendor A’s boxes. Family documents and feedback never appear here.</div></div>
       </div>
     </div>`;
   }
@@ -690,14 +711,14 @@
     const needPhoto = dmg > 0 && !g.photo;
     return `<div class="pack">
       <section class="card">
-        <div class="card__head"><div class="grow"><div class="card__title">PO-2027-021, Kit 01 items</div></div>${g.sent ? chip('ok', 'GRN-2027-051 submitted') : chip('line', 'Draft')}</div>
+        <div class="card__head"><div class="grow"><div class="card__title">PO-2027-021, Kit 01 items</div></div>${g.sent ? chip('ok', 'Count sent to YGG') : chip('line', 'Not sent yet')}</div>
         <div class="table-wrap"><table class="table"><thead><tr><th>SKU</th><th>Item</th><th class="num">Ordered</th><th>Received</th><th>Damaged</th><th class="num">Accepted</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table></div>
         <div class="qc" style="border-top:1px solid var(--line)">
           <button class="upload${g.photo ? ' is-done' : ''}" type="button" data-act="grn-photo"${g.sent ? ' disabled' : ''}><span class="upload__thumb">${g.photo ? ic('check') : ic('camera')}</span><span><b>${g.photo ? '3 photos attached' : 'Add photos of damaged items'}</b><br><span class="hint">${dmg ? 'Required when anything is damaged' : 'Optional when everything matches'}</span></span></button>
           ${needPhoto ? `<div class="err">${ic('circle-alert')}Add a photo of the ${dmg} damaged items before you submit.</div>` : ''}
           ${g.sent ? `<div class="note note--warn">${ic('triangle-alert')}<div><b>Discrepancy recorded.</b> ${short} units short and ${dmg} damaged. Usable stock rose by the accepted units only; damaged units are in quarantine and CASE-0150 is with the Kita Main manager.</div></div>` : ''}
         </div>
-        <div class="pack__foot"><span class="hint">Received by VA-07, 15 Mar</span><button class="btn btn--primary btn--lg" type="button" data-act="grn-send"${g.sent || needPhoto ? ' disabled' : ''}>Submit goods received note</button></div>
+        <div class="pack__foot"><span class="hint">Received by VA-07, 15 Mar</span><button class="btn btn--primary btn--lg" type="button" data-act="grn-send"${g.sent || needPhoto ? ' disabled' : ''}>Send the count to YGG</button></div>
       </section>
       <div class="stack"><section class="card"><div class="card__head"><div class="grow"><div class="card__title">On submit</div></div></div>
         <div class="card__body"><div class="timeline">
@@ -962,7 +983,8 @@
       e.stopPropagation();
       switch (act) {
         case 'menu': $('#side').classList.toggle('is-open'); return;
-        case 'role': location.hash = a.dataset.role === 'vendor' ? '#/vendor/pack' : '#/overview'; return;
+        case 'role': location.hash = a.dataset.role === 'vendor' ? '#/vendor' : '#/overview'; return;
+        case 'pick-checker': S.pack.checker = a.dataset.v; render(true); return;
         case 'close': closeDrawer(); return;
         case 'app-merge': S.closed[a.dataset.id] = 'Merged with KM-H-2027-0217'; S.left.amber -= 1; render(true); refreshDrawer(); toast('Merged with KM-H-2027-0217', 'One household, one set of three kits.'); return;
         case 'app-clear': S.routeOf[a.dataset.id] = 'green'; S.left.amber -= 1; S.left.green += 1; render(true); refreshDrawer(); toast('Marked as not a duplicate', 'It now passes every rule and can be approved.'); return;
@@ -1002,7 +1024,7 @@
           render(true); toast(`${id} ready for dispatch`, `${p.done} of 188 packed in BATCH-2027-031. Next label loaded.`); return;
         }
         case 'grn-photo': S.grn.photo = true; render(true); return;
-        case 'grn-send': S.grn.sent = true; render(true); toast('GRN-2027-051 submitted', 'Accepted units added to stock; damaged units quarantined'); return;
+        case 'grn-send': S.grn.sent = true; render(true); toast('Delivery count sent', 'Good items are now stock; damaged ones are on hold.'); return;
         case 'confirm': S.confirm.sent = true; S.gateVendor = S.gateVendor; render(true); toast('BATCH-2027-035 confirmed', 'Packing 29 Mar to 5 Apr, 100 boxes a week'); return;
         case 'disp-proof': S.disp.proof = true; render(true); return;
         case 'disp-done': S.disp.done = true; render(true); toast('130 parcels handed to J&T', 'Families get their tracking message automatically'); return;
